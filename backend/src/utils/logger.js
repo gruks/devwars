@@ -1,35 +1,76 @@
-// Simple logger utility
-// Wraps console with log levels and formatting
+/**
+ * Winston logger configuration
+ * Provides formatted logging with timestamps
+ */
 
-const env = require('./env');
+const winston = require('winston');
+const { env } = require('../config/env.js');
 
-const isDev = env.NODE_ENV === 'development';
+// Define log format
+const logFormat = winston.format.combine(
+  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  winston.format.errors({ stack: true }),
+  winston.format.splat(),
+  winston.format.json()
+);
 
-const logger = {
-  info: (message, ...args) => {
-    const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] INFO: ${message}`, ...args);
-  },
-  
-  error: (message, error, ...args) => {
-    const timestamp = new Date().toISOString();
-    console.error(`[${timestamp}] ERROR: ${message}`, error?.message || '', ...args);
-    if (isDev && error?.stack) {
-      console.error(error.stack);
+// Define console format for development (colorized)
+const consoleFormat = winston.format.combine(
+  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  winston.format.colorize({ all: true }),
+  winston.format.printf(({ level, message, timestamp, stack, ...metadata }) => {
+    let msg = `${timestamp} [${level}]: ${message}`;
+    
+    if (Object.keys(metadata).length > 0) {
+      msg += ` ${JSON.stringify(metadata)}`;
     }
-  },
-  
-  warn: (message, ...args) => {
-    const timestamp = new Date().toISOString();
-    console.warn(`[${timestamp}] WARN: ${message}`, ...args);
-  },
-  
-  debug: (message, ...args) => {
-    if (isDev) {
-      const timestamp = new Date().toISOString();
-      console.log(`[${timestamp}] DEBUG: ${message}`, ...args);
+    
+    if (stack) {
+      msg += `\n${stack}`;
     }
+    
+    return msg;
+  })
+);
+
+// Create transports array
+const transports = [
+  // Console transport
+  new winston.transports.Console({
+    format: env.isDevelopment ? consoleFormat : logFormat,
+    level: env.isDevelopment ? 'debug' : 'info'
+  })
+];
+
+// Add file transports in production
+if (env.isProduction) {
+  transports.push(
+    new winston.transports.File({
+      filename: 'logs/error.log',
+      level: 'error',
+      format: logFormat
+    }),
+    new winston.transports.File({
+      filename: 'logs/combined.log',
+      format: logFormat
+    })
+  );
+}
+
+// Create logger instance
+const logger = winston.createLogger({
+  level: env.LOG_LEVEL || 'info',
+  defaultMeta: { service: 'devwars-api' },
+  transports,
+  // Don't exit on uncaught errors
+  exitOnError: false
+});
+
+// Stream for Morgan HTTP logging
+logger.stream = {
+  write: (message) => {
+    logger.info(message.trim());
   }
 };
 
-module.exports = logger;
+module.exports = { logger };
