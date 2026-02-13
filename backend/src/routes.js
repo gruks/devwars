@@ -33,16 +33,32 @@ router.get('/docs', (req, res) => {
     message: 'API Documentation',
     endpoints: {
       health: 'GET /api/v1/health',
-      docs: 'GET /api/v1/docs'
+      docs: 'GET /api/v1/docs',
+      auth: {
+        register: 'POST /api/v1/auth/register',
+        login: 'POST /api/v1/auth/login',
+        refresh: 'POST /api/v1/auth/refresh',
+        logout: 'POST /api/v1/auth/logout (protected)',
+        me: 'GET /api/v1/auth/me (protected)'
+      }
     },
     note: 'Full documentation coming soon'
   });
 });
 
 /**
- * Module routes will be mounted here in future plans:
+ * Auth routes
+ * POST /api/v1/auth/register - Register new user
+ * POST /api/v1/auth/login - Login user
+ * POST /api/v1/auth/refresh - Refresh access token
+ * POST /api/v1/auth/logout - Logout user (protected)
+ * GET /api/v1/auth/me - Get current user (protected)
+ */
+router.use('/auth', require('./modules/auth/auth.routes.js'));
+
+/**
+ * Future module routes:
  * 
- * router.use('/auth', require('./modules/auth/auth.routes'));
  * router.use('/users', require('./modules/users/user.routes'));
  * router.use('/games', require('./modules/games/game.routes'));
  * router.use('/lobby', require('./modules/lobby/lobby.routes'));
