@@ -1,0 +1,144 @@
+/**
+ * Auth controller
+ * HTTP handlers for authentication endpoints
+ */
+
+const authService = require('./auth.service.js');
+const { asyncHandler } = require('../../utils/helpers.js');
+const { sendSuccess } = require('../../utils/helpers.js');
+const { HTTP_STATUS } = require('../../utils/constants.js');
+const { logger } = require('../../utils/logger.js');
+
+/**
+ * Register a new user
+ * POST /api/v1/auth/register
+ */
+const register = asyncHandler(async (req, res) => {
+  const { username, email, password } = req.body;
+
+  // Validate required fields
+  if (!username || !email || !password) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      success: false,
+      message: 'Please provide username, email, and password'
+    });
+  }
+
+  // Validate field types
+  if (typeof username !== 'string' || typeof email !== 'string' || typeof password !== 'string') {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      success: false,
+      message: 'Invalid input data types'
+    });
+  }
+
+  // Validate field lengths
+  if (username.length < 3 || username.length > 30) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      success: false,
+      message: 'Username must be between 3 and 30 characters'
+    });
+  }
+
+  if (password.length < 6) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      success: false,
+      message: 'Password must be at least 6 characters'
+    });
+  }
+
+  // Call service
+  const result = await authService.register({ username, email, password });
+
+  logger.info(`User registered: ${result.user.email}`);
+
+  sendSuccess(res, 'User registered successfully', result, HTTP_STATUS.CREATED);
+});
+
+/**
+ * Login user
+ * POST /api/v1/auth/login
+ */
+const login = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  // Validate required fields
+  if (!email || !password) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      success: false,
+      message: 'Please provide email and password'
+    });
+  }
+
+  // Validate field types
+  if (typeof email !== 'string' || typeof password !== 'string') {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      success: false,
+      message: 'Invalid input data types'
+    });
+  }
+
+  // Call service
+  const result = await authService.login({ email, password });
+
+  logger.info(`User logged in: ${result.user.email}`);
+
+  sendSuccess(res, 'Login successful', result);
+});
+
+/**
+ * Refresh access token
+ * POST /api/v1/auth/refresh
+ */
+const refreshToken = asyncHandler(async (req, res) => {
+  const { refreshToken } = req.body;
+
+  // Validate required field
+  if (!refreshToken) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      success: false,
+      message: 'Please provide refresh token'
+    });
+  }
+
+  // Call service
+  const result = await authService.refreshToken(refreshToken);
+
+  sendSuccess(res, 'Token refreshed successfully', result);
+});
+
+/**
+ * Logout user
+ * POST /api/v1/auth/logout
+ */
+const logout = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  const { refreshToken } = req.body;
+
+  // Call service (works even without userId for "logout everywhere" effect)
+  const result = await authService.logout(userId, refreshToken);
+
+  if (userId) {
+    logger.info(`User logged out: ${userId}`);
+  }
+
+  sendSuccess(res, result.message);
+});
+
+/**
+ * Get current user profile
+ * GET /api/v1/auth/me
+ */
+const getMe = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  sendSuccess(res, 'User profile retrieved', { user });
+});
+
+module.exports = {
+  register,
+  login,
+  refreshToken,
+  logout,
+  getMe
+};
