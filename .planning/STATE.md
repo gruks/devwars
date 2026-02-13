@@ -3,7 +3,7 @@
 ## Current Phase
 
 **Phase**: 01-foundation
-**Status**: In progress - 2 of 3 plans complete
+**Status**: Complete - 3 of 3 plans complete
 
 ## What's Been Built
 
@@ -18,22 +18,29 @@
 - [x] Redis connection module with reconnection strategy
 - [x] Server lifecycle management (startup/shutdown)
 - [x] Graceful shutdown handling for all connections
+- [x] User Mongoose model with password hashing and stats
+- [x] JWT authentication system with bcrypt
+- [x] Auth service layer with token rotation
+- [x] Protected route middleware with role authorization
+- [x] Auth endpoints: register, login, refresh, logout, me
 
 ## What's Next
 
 ### Phase 1: Foundation
 
-**Next Action**: Execute Plan 01-03 (Authentication system)
+**Status**: ✓ All plans complete
 
-**Upcoming Plans**:
+**Completed Plans**:
 1. ~~01-01 — Project setup and configuration~~ ✓ Complete
 2. ~~01-02 — Database and Redis connections~~ ✓ Complete
-3. 01-03 — Authentication system (next)
+3. ~~01-03 — Authentication system~~ ✓ Complete
+
+**Next Phase**: Ready to begin Phase 2 (Core Features)
 
 ## Progress
 
 ```
-Phase 1: Foundation [██████░░░░] 67% (2/3 plans)
+Phase 1: Foundation [██████████] 100% (3/3 plans)
 ```
 
 ## Decisions
@@ -65,10 +72,20 @@ Phase 1: Foundation [██████░░░░] 67% (2/3 plans)
 
 | Topic | Options | When to Decide |
 |-------|---------|----------------|
-| OAuth providers | Google, GitHub, etc. | Phase 1-03 |
+| OAuth providers | Google, GitHub, Discord | Phase 2+ (future enhancement) |
 | Test framework | Jest vs Mocha | Phase 2 |
+| Frontend framework | React, Vue, Svelte | Phase 2 |
 
 ## Recent Decisions
+
+### 01-03 (Authentication)
+
+5. **bcryptjs over bcrypt** (2026-02-13) - Pure JavaScript password hashing for easier deployment without native dependencies
+6. **Token rotation** (2026-02-13) - Refresh tokens are single-use for enhanced security; each refresh issues new token pair
+7. **Service layer pattern** (2026-02-13) - Separated business logic from HTTP handling for better testability and maintainability
+8. **Password field protection** (2026-02-13) - Used `select: false` and custom `toJSON()` to ensure passwords never exposed in API responses
+
+### Previous Decisions
 
 1. **ORM: Mongoose** (2026-02-13) - Chose mongoose over native driver for schema validation, middleware support, and built-in CRUD methods
 2. **Server waits for databases** (2026-02-13) - Server startup waits for MongoDB and Redis connections before accepting HTTP requests
@@ -85,11 +102,14 @@ None currently.
 - Targeting MVP with modular structure
 - Database connections established and tested
 - Foundation infrastructure complete with logging, errors, env config
-- Ready for authentication implementation
+- Authentication system complete with JWT, bcrypt, and role-based access
+- Ready for Phase 2: Core Features (lobby, rooms, matches, challenges)
 - Future: Microservice extraction possible from module boundaries
+- OAuth integration planned for future enhancement
 
 ## Last Session
 
-- **Stopped At**: Completed 01-01-PLAN.md
-- **Commits**: 5 atomic commits (dependencies, env config, utils, error handling, app/server)
-- **Duration**: ~12 minutes
+- **Stopped At**: Completed 01-03-PLAN.md (Authentication system)
+- **Commits**: 7 atomic commits (dependencies, User model, auth service, controller, routes, middleware, mounting)
+- **Duration**: ~4 minutes
+- **Completed**: 2026-02-13
