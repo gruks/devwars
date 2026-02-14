@@ -5,7 +5,6 @@
 
 const mongoose = require('mongoose');
 const { env } = require('./env');
-const logger = require('../utils/logger');
 
 /**
  * Connect to MongoDB
@@ -14,13 +13,13 @@ const logger = require('../utils/logger');
 async function connectDB() {
   try {
     const options = {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     };
-
+    
     await mongoose.connect(env.MONGODB_URI, options);
     
-    logger.info('MongoDB connected successfully', {
+    console.log('MongoDB connected successfully', {
       host: mongoose.connection.host,
       port: mongoose.connection.port,
       database: mongoose.connection.name,
@@ -28,19 +27,19 @@ async function connectDB() {
 
     // Handle connection events
     mongoose.connection.on('error', (err) => {
-      logger.error('MongoDB connection error:', err);
+      console.error('MongoDB connection error:', err.message);
     });
 
     mongoose.connection.on('disconnected', () => {
-      logger.warn('MongoDB disconnected');
+      console.warn('MongoDB disconnected');
     });
 
     mongoose.connection.on('reconnected', () => {
-      logger.info('MongoDB reconnected');
+      console.log('MongoDB reconnected');
     });
 
   } catch (error) {
-    logger.error('Failed to connect to MongoDB:', error);
+    console.error('Failed to connect to MongoDB:', error.message);
     throw error;
   }
 }
@@ -52,22 +51,22 @@ async function connectDB() {
 async function disconnectDB() {
   try {
     await mongoose.connection.close();
-    logger.info('MongoDB connection closed');
+    console.log('MongoDB connection closed');
   } catch (error) {
-    logger.error('Error closing MongoDB connection:', error);
+    console.error('Error closing MongoDB connection:', error.message);
     throw error;
   }
 }
 
 // Handle process signals for graceful shutdown
 process.on('SIGTERM', async () => {
-  logger.info('SIGTERM received, closing MongoDB connection...');
+  console.log('SIGTERM received, closing MongoDB connection...');
   await disconnectDB();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  logger.info('SIGINT received, closing MongoDB connection...');
+  console.log('SIGINT received, closing MongoDB connection...');
   await disconnectDB();
   process.exit(0);
 });

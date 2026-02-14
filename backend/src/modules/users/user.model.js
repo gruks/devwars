@@ -84,18 +84,13 @@ userSchema.index({ username: 1 }, { unique: true });
  * Pre-save hook to hash password before saving
  * Only hashes if password is modified (not on every save)
  */
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function() {
   // Only hash if password is modified
-  if (!this.isModified('password')) return next();
+  if (!this.isModified('password')) return;
   
-  try {
-    // Generate salt and hash password
-    const salt = await bcrypt.genSalt(env.BCRYPT_ROUNDS || 12);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
+  // Generate salt and hash password
+  const salt = await bcrypt.genSalt(env.BCRYPT_ROUNDS || 12);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
 /**
