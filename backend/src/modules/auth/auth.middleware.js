@@ -23,12 +23,15 @@ const authenticate = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     // Check if header exists and has Bearer format
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new AppError('Access token required', HTTP_STATUS.UNAUTHORIZED);
+    let token = null;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      // Authorization header takes precedence
+      token = authHeader.split(' ')[1];
+    } else {
+      // Fallback to cookie-based auth (for browser sessions)
+      token = req.cookies?.accessToken;
     }
-
-    // Extract token
-    const token = authHeader.split(' ')[1];
 
     if (!token) {
       throw new AppError('Access token required', HTTP_STATUS.UNAUTHORIZED);
@@ -107,14 +110,18 @@ const optionalAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      // No token provided, continue without user
-      return next();
+    // Check Authorization header first
+    let token = null;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else {
+      // Fallback to cookie-based auth (for browser sessions)
+      token = req.cookies?.accessToken;
     }
 
-    const token = authHeader.split(' ')[1];
-
     if (!token) {
+      // No token provided, continue without user
       return next();
     }
 
