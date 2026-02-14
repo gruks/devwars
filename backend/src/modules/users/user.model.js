@@ -134,6 +134,9 @@ userSchema.methods.updateStats = async function(won) {
  * @param {string} token - Refresh token to add
  */
 userSchema.methods.addRefreshToken = async function(token) {
+  if (!this.refreshTokens) {
+    this.refreshTokens = [];
+  }
   this.refreshTokens.push(token);
   await this.save();
 };
@@ -143,6 +146,9 @@ userSchema.methods.addRefreshToken = async function(token) {
  * @param {string} token - Refresh token to remove
  */
 userSchema.methods.removeRefreshToken = async function(token) {
+  if (!this.refreshTokens) {
+    this.refreshTokens = [];
+  }
   this.refreshTokens = this.refreshTokens.filter(t => t !== token);
   await this.save();
 };
