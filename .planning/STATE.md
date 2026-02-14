@@ -13,6 +13,13 @@
 - Remember me functionality (30-day sessions)
 - Frontend AuthContext with session persistence
 
+### lobby-fix-02: Create Room Flow ✓ Complete
+- Create room endpoint with comprehensive validation
+- Auto-generated room names with random 6-char codes
+- Skill level auto-detection based on user rating
+- Frontend room creation with validation and error handling
+- Duplicate invite code retry logic
+
 ## What's Been Built
 
 - [x] Basic Express server with security middleware (helmet, cors)
@@ -34,6 +41,10 @@
 - [x] Cookie-based session management (httpOnly tokens)
 - [x] Automatic token refresh (5-minute intervals)
 - [x] Remember me functionality (30-day extended sessions)
+- [x] Room creation endpoint with input validation
+- [x] Auto-generated room names (Room-{6char})
+- [x] Skill level detection (beginner→expert based on rating)
+- [x] Frontend room creation form with validation
 
 ## What's Next
 
@@ -52,7 +63,7 @@
 
 ```
 Phase 1: Foundation    [██████████] 100% (3/3 plans)
-Phase lobby-fix        [░░░░░░░░░░]   0% (1/N plans)
+Phase lobby-fix        [██████░░░░]  50% (2/4 plans)
 Overall                [░░░░░░░░░░]   0% (1/4+ plans)
 ```
 
@@ -91,6 +102,13 @@ Overall                [░░░░░░░░░░]   0% (1/4+ plans)
 
 ## Recent Decisions
 
+### lobby-fix-02 (Create Room Flow)
+
+12. **Skill level thresholds** (2026-02-14) - Rating brackets: >=1600 expert, >=1300 advanced, >=1000 intermediate, <1000 beginner
+13. **Room name auto-generation** (2026-02-14) - Format "Room-{6 random alphanumeric chars}" when name not provided
+14. **Double validation strategy** (2026-02-14) - Frontend for UX, backend for security
+15. **Invite code collision handling** (2026-02-14) - Retry up to 3 times on duplicate code before failing
+
 ### lobby-fix-01 (Session Management)
 
 9. **httpOnly cookies for tokens** (2026-02-14) - Protect against XSS by storing tokens in httpOnly cookies instead of localStorage
@@ -128,7 +146,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed lobby-fix-01-PLAN.md (Persistent Session Management)
-- **Commits**: 4 atomic commits + 2 submodule reference commits
-- **Duration**: 4 minutes
+- **Stopped At**: Completed lobby-fix-02-PLAN.md (Create Room Flow)
+- **Commits**: 3 atomic commits + 1 submodule reference commit
+- **Duration**: 12 minutes
 - **Completed**: 2026-02-14
