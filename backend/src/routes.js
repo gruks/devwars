@@ -57,6 +57,13 @@ router.get('/docs', (req, res) => {
 router.use('/auth', require('./modules/auth/auth.routes.js'));
 
 /**
+ * User routes
+ * GET /api/v1/users/leaderboard - Get leaderboard
+ * GET /api/v1/users/:username - Get user by username
+ */
+router.use('/users', require('./modules/users/user.routes.js'));
+
+/**
  * Future module routes:
  * 
  * router.use('/users', require('./modules/users/user.routes'));
