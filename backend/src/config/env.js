@@ -25,6 +25,7 @@ const envSchema = {
   // Server configuration
   PORT: { default: 3000, parser: Number },
   NODE_ENV: { default: 'development', parser: String },
+  ALLOWED_ORIGINS: { default: '', parser: String },
   
   // Database
   MONGODB_URI: { default: 'mongodb://localhost:27017/devwars', parser: String },

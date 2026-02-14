@@ -21,8 +21,9 @@ const app = express();
 app.use(helmet());
 
 // CORS middleware
+const allowedOrigins = env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [];
 app.use(cors({
-  origin: env.isDevelopment ? '*' : process.env.ALLOWED_ORIGINS?.split(',') || [],
+  origin: env.isDevelopment ? allowedOrigins.length > 0 ? allowedOrigins : true : allowedOrigins,
   credentials: true
 }));
 
