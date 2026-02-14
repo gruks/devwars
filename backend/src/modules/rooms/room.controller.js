@@ -282,8 +282,10 @@ const joinRoom = async (req, res) => {
       });
     }
     
+    // Find room
     const room = await Room.findById(id);
     
+    // Check room exists
     if (!room) {
       return res.status(404).json({
         success: false,
@@ -291,14 +293,23 @@ const joinRoom = async (req, res) => {
       });
     }
     
-    if (!room.canJoin()) {
+    // Check room status is waiting
+    if (room.status !== 'waiting') {
       return res.status(400).json({
         success: false,
-        message: 'Room is not available to join'
+        message: `Cannot join room: ${room.status === 'playing' ? 'Game in progress' : 'Game has ended'}`
       });
     }
     
-    // Check if already in room
+    // Check room is not full
+    if (room.playerCount >= room.maxPlayers) {
+      return res.status(400).json({
+        success: false,
+        message: 'Room is full'
+      });
+    }
+    
+    // Check user not already in room
     const alreadyIn = room.players.some(p => p.userId.toString() === userId.toString());
     if (alreadyIn) {
       return res.status(400).json({
@@ -307,7 +318,18 @@ const joinRoom = async (req, res) => {
       });
     }
     
-    await room.addPlayer(userId, username);
+    // Add player to room with joinedAt timestamp
+    room.players.push({ 
+      userId, 
+      username, 
+      isReady: false,
+      joinedAt: new Date()
+    });
+    
+    await room.save();
+    
+    // Populate and return updated room
+    await room.populate('createdBy', 'username');
     await room.populate('players.userId', 'username');
     
     res.json({
