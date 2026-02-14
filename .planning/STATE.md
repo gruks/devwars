@@ -20,6 +20,14 @@
 - Frontend room creation with validation and error handling
 - Duplicate invite code retry logic
 
+### lobby-fix-03: Room Lifecycle and Timestamps ✓ Complete
+- Player join timestamp tracking (joinedAt, lastActiveAt, departedAt)
+- Match start endpoint with host authorization
+- Match end endpoint with player stats updates
+- Match results endpoint with duration calculation
+- Frontend status badges (waiting/playing/finished)
+- Relative time display for room creation
+
 ## What's Been Built
 
 - [x] Basic Express server with security middleware (helmet, cors)
@@ -45,6 +53,10 @@
 - [x] Auto-generated room names (Room-{6char})
 - [x] Skill level detection (beginner→expert based on rating)
 - [x] Frontend room creation form with validation
+- [x] Player timestamp tracking (joinedAt, lastActiveAt, departedAt)
+- [x] Match start/end endpoints with authorization
+- [x] Player stats updates on match completion (wins/losses/rating)
+- [x] Frontend room status display (waiting/playing/finished)
 
 ## What's Next
 
@@ -63,7 +75,7 @@
 
 ```
 Phase 1: Foundation    [██████████] 100% (3/3 plans)
-Phase lobby-fix        [██████░░░░]  50% (2/4 plans)
+Phase lobby-fix        [████████░░]  75% (3/4 plans)
 Overall                [░░░░░░░░░░]   0% (1/4+ plans)
 ```
 
@@ -101,6 +113,12 @@ Overall                [░░░░░░░░░░]   0% (1/4+ plans)
 | Frontend framework | React, Vue, Svelte | Phase 2 |
 
 ## Recent Decisions
+
+### lobby-fix-03 (Room Lifecycle)
+
+16. **Player activity tracking** (2026-02-14) - Added lastActiveAt for activity monitoring and departedAt for audit trail when players leave
+17. **Match authorization** (2026-02-14) - Only room host can start match; host or system can end match
+18. **Rating adjustment formula** (2026-02-14) - +25 points for win, -15 points for loss, minimum rating 100
 
 ### lobby-fix-02 (Create Room Flow)
 
@@ -146,7 +164,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed lobby-fix-02-PLAN.md (Create Room Flow)
-- **Commits**: 3 atomic commits + 1 submodule reference commit
-- **Duration**: 12 minutes
+- **Stopped At**: Completed lobby-fix-03-PLAN.md (Room Lifecycle and Timestamps)
+- **Commits**: 4 atomic commits + 1 submodule reference commit
+- **Duration**: 3 minutes
 - **Completed**: 2026-02-14
