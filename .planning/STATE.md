@@ -3,7 +3,7 @@
 ## Current Phase
 
 **Phase**: lobby-fix
-**Status**: Complete - 4 of 4 plans complete
+**Status**: Complete - 5 of 5 plans complete
 
 ## Phase Plans
 
@@ -34,6 +34,12 @@
 - Leave room endpoint with host transfer and empty room deletion
 - Lobby auto-refresh polling with graceful error handling
 - Frontend refresh after successful join
+
+### lobby-fix-05: Gap Closure - Cookie Auth Middleware ✓ Complete
+- Cookie fallback added to authenticate middleware (req.cookies?.accessToken)
+- Cookie fallback added to optionalAuth middleware
+- Authorization header takes precedence over cookie fallback
+- Enables session persistence after browser close/reopen
 
 ## What's Been Built
 
@@ -69,6 +75,7 @@
 - [x] Lobby auto-refresh with 5-second polling
 - [x] Host transfer on leave
 - [x] Empty room auto-deletion
+- [x] Cookie fallback in auth middleware (session persists after browser close)
 
 ## What's Next
 
