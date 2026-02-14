@@ -74,6 +74,18 @@ const VALID_DIFFICULTIES = ['easy', 'medium', 'hard', 'extreme'];
 const VALID_TIMERS = [10, 15, 20, 30];
 
 /**
+ * Determine skill level based on user rating
+ * @param {number} rating - User's rating
+ * @returns {string} skillLevel - beginner, intermediate, advanced, or expert
+ */
+const determineSkillLevel = (rating) => {
+  if (rating >= 1600) return 'expert';
+  if (rating >= 1300) return 'advanced';
+  if (rating >= 1000) return 'intermediate';
+  return 'beginner';
+};
+
+/**
  * Create a new room
  * POST /api/v1/lobby/rooms
  */
@@ -143,6 +155,11 @@ const createRoom = async (req, res) => {
       });
     }
     
+    // Fetch user to get their rating for skill level
+    const user = await User.findById(userId).select('stats.rating');
+    const userRating = user?.stats?.rating || 1000;
+    const skillLevel = determineSkillLevel(userRating);
+    
     let room;
     let retries = 0;
     const maxRetries = 3;
@@ -157,6 +174,7 @@ const createRoom = async (req, res) => {
           isPrivate: Boolean(isPrivate),
           difficulty,
           timer: timerNum,
+          skillLevel,
           createdBy: userId,
           players: [{ userId, username, isReady: true }]
         });
