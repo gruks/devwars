@@ -23,9 +23,16 @@ const playerSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  lastActiveAt: {
+    type: Date,
+    default: Date.now
+  },
   isReady: {
     type: Boolean,
     default: false
+  },
+  departedAt: {
+    type: Date
   }
 }, { _id: false });
 
@@ -138,6 +145,12 @@ roomSchema.methods.addPlayer = function(userId, username) {
 
 // Remove player from room
 roomSchema.methods.removePlayer = function(userId) {
+  // Log departure timestamp for the leaving player
+  const player = this.players.find(p => p.userId.toString() === userId.toString());
+  if (player) {
+    player.departedAt = new Date();
+  }
+  
   this.players = this.players.filter(p => p.userId.toString() !== userId.toString());
   
   // If room is empty, delete it
@@ -151,6 +164,16 @@ roomSchema.methods.removePlayer = function(userId) {
   }
   
   return this.save();
+};
+
+// Update player activity timestamp
+roomSchema.methods.updatePlayerActivity = function(userId) {
+  const player = this.players.find(p => p.userId.toString() === userId.toString());
+  if (player) {
+    player.lastActiveAt = new Date();
+    return this.save();
+  }
+  return Promise.resolve(this);
 };
 
 // Start match
