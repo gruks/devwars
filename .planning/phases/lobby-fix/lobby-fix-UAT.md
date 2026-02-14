@@ -1,9 +1,9 @@
 ---
-status: complete
+status: diagnosed
 phase: lobby-fix
 source: lobby-fix-01-SUMMARY.md, lobby-fix-02-SUMMARY.md, lobby-fix-03-SUMMARY.md, lobby-fix-04-SUMMARY.md
 started: 2026-02-14T10:00:00Z
-updated: 2026-02-14T10:10:00Z
+updated: 2026-02-14T10:15:00Z
 ---
 
 ## Current Test
@@ -128,5 +128,13 @@ skipped: 19
   reason: "User reported: The frontend is sending multiple requests and i am not able to type. Auth check failed: AxiosError: Request aborted. I deleted a null file after which the problem began."
   severity: blocker
   test: 1
-  artifacts: []
-  missing: []
+  root_cause: "Backend auth.middleware.js ONLY accepts JWT in Authorization: Bearer header. Frontend uses cookie-based auth (withCredentials: true). When browser reopens, frontend sends cookies but NO Authorization header, backend rejects with 401, creates retry loop causing Request aborted errors and UI freeze."
+  artifacts:
+    - path: "backend/src/modules/auth/auth.middleware.js"
+      issue: "authenticate middleware only reads Authorization header, no cookie fallback"
+    - path: "code-arena/src/lib/api.ts"
+      issue: "Frontend expects cookies to work but backend doesn't read them"
+  missing:
+    - "Add cookie fallback to read accessToken from cookies in auth.middleware.js"
+    - "Or update frontend to send Authorization header with extracted JWT"
+  debug_session: ".planning/debug/auth-request-aborted.md"
