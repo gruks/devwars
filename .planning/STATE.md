@@ -2,8 +2,16 @@
 
 ## Current Phase
 
-**Phase**: 01-foundation
-**Status**: Complete - 3 of 3 plans complete
+**Phase**: lobby-fix
+**Status**: In Progress - 1 of N plans complete
+
+## Phase Plans
+
+### lobby-fix-01: Persistent Session Management ✓ Complete
+- Cookie-based authentication with httpOnly tokens
+- Automatic token refresh (5-min intervals)
+- Remember me functionality (30-day sessions)
+- Frontend AuthContext with session persistence
 
 ## What's Been Built
 
@@ -23,6 +31,9 @@
 - [x] Auth service layer with token rotation
 - [x] Protected route middleware with role authorization
 - [x] Auth endpoints: register, login, refresh, logout, me
+- [x] Cookie-based session management (httpOnly tokens)
+- [x] Automatic token refresh (5-minute intervals)
+- [x] Remember me functionality (30-day extended sessions)
 
 ## What's Next
 
@@ -40,7 +51,9 @@
 ## Progress
 
 ```
-Phase 1: Foundation [██████████] 100% (3/3 plans)
+Phase 1: Foundation    [██████████] 100% (3/3 plans)
+Phase lobby-fix        [░░░░░░░░░░]   0% (1/N plans)
+Overall                [░░░░░░░░░░]   0% (1/4+ plans)
 ```
 
 ## Decisions
@@ -78,6 +91,12 @@ Phase 1: Foundation [██████████] 100% (3/3 plans)
 
 ## Recent Decisions
 
+### lobby-fix-01 (Session Management)
+
+9. **httpOnly cookies for tokens** (2026-02-14) - Protect against XSS by storing tokens in httpOnly cookies instead of localStorage
+10. **Token refresh interval** (2026-02-14) - Auto-refresh tokens every 5 minutes during active sessions to prevent expiry
+11. **Remember me sessions** (2026-02-14) - 30-day sessions when remember me enabled, 7-day standard sessions
+
 ### 01-03 (Authentication)
 
 5. **bcryptjs over bcrypt** (2026-02-13) - Pure JavaScript password hashing for easier deployment without native dependencies
@@ -109,7 +128,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed 01-03-PLAN.md (Authentication system)
-- **Commits**: 7 atomic commits (dependencies, User model, auth service, controller, routes, middleware, mounting)
-- **Duration**: ~4 minutes
-- **Completed**: 2026-02-13
+- **Stopped At**: Completed lobby-fix-01-PLAN.md (Persistent Session Management)
+- **Commits**: 4 atomic commits + 2 submodule reference commits
+- **Duration**: 4 minutes
+- **Completed**: 2026-02-14
