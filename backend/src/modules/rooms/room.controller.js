@@ -458,6 +458,173 @@ const startMatch = async (req, res) => {
   }
 };
 
+/**
+ * End a match
+ * POST /api/v1/lobby/rooms/:id/end
+ */
+const endMatch = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { winnerId, results } = req.body;
+    const userId = req.user?._id;
+    
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+    
+    const room = await Room.findById(id);
+    
+    if (!room) {
+      return res.status(404).json({
+        success: false,
+        message: 'Room not found'
+      });
+    }
+    
+    // Only host or system can end match
+    const isHost = room.createdBy.toString() === userId.toString();
+    const isSystem = req.user?.role === 'system' || req.user?.role === 'admin';
+    
+    if (!isHost && !isSystem) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only room host or system can end the match'
+      });
+    }
+    
+    // Check room status
+    if (room.status !== 'playing') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot end match from ${room.status} status`
+      });
+    }
+    
+    // End the match using model method
+    await room.endMatch();
+    
+    // Update player stats if results provided
+    if (results && Array.isArray(results)) {
+      for (const result of results) {
+        const { userId: playerId, score, isWinner } = result;
+        
+        const player = await User.findById(playerId);
+        if (player && player.stats) {
+          // Update matches played
+          player.stats.matchesPlayed = (player.stats.matchesPlayed || 0) + 1;
+          
+          if (isWinner || playerId.toString() === winnerId?.toString()) {
+            player.stats.wins = (player.stats.wins || 0) + 1;
+            // Increase rating for winner
+            player.stats.rating = (player.stats.rating || 1000) + 25;
+          } else {
+            player.stats.losses = (player.stats.losses || 0) + 1;
+            // Decrease rating for loser (min 100)
+            player.stats.rating = Math.max(100, (player.stats.rating || 1000) - 15);
+          }
+          
+          await player.save();
+        }
+      }
+    }
+    
+    await room.populate('createdBy', 'username');
+    await room.populate('players.userId', 'username');
+    
+    // Broadcast to all players via socket (if socket service available)
+    if (req.io) {
+      req.io.to(`room-${id}`).emit('match-ended', {
+        roomId: id,
+        finishedAt: room.finishedAt,
+        winnerId,
+        results
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Match ended successfully',
+      data: {
+        room,
+        winnerId,
+        results
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to end match',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get match results
+ * GET /api/v1/lobby/rooms/:id/results
+ */
+const getMatchResults = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const room = await Room.findById(id)
+      .populate('createdBy', 'username')
+      .populate('players.userId', 'username stats');
+    
+    if (!room) {
+      return res.status(404).json({
+        success: false,
+        message: 'Room not found'
+      });
+    }
+    
+    // Only return results for finished matches
+    if (room.status !== 'finished' && room.status !== 'playing') {
+      return res.status(400).json({
+        success: false,
+        message: 'Match has not started yet'
+      });
+    }
+    
+    // Calculate match duration
+    const duration = room.startedAt && room.finishedAt
+      ? Math.round((room.finishedAt - room.startedAt) / 1000) // in seconds
+      : room.startedAt
+        ? Math.round((Date.now() - room.startedAt) / 1000)
+        : null;
+    
+    res.json({
+      success: true,
+      data: {
+        roomId: room._id,
+        name: room.name,
+        mode: room.mode,
+        status: room.status,
+        startedAt: room.startedAt,
+        finishedAt: room.finishedAt,
+        duration,
+        players: room.players.map(p => ({
+          userId: p.userId._id,
+          username: p.userId.username,
+          stats: p.userId.stats,
+          joinedAt: p.joinedAt,
+          isReady: p.isReady
+        })),
+        winner: room.winner
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch match results',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getRooms,
   createRoom,
@@ -465,5 +632,7 @@ module.exports = {
   joinRoom,
   leaveRoom,
   getLobbyStats,
-  startMatch
+  startMatch,
+  endMatch,
+  getMatchResults
 };
