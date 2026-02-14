@@ -12,7 +12,7 @@ const { User } = require('../users/user.model.js');
  */
 const getRooms = async (req, res) => {
   try {
-    const { mode, status, isPrivate, limit = 50, offset = 0 } = req.query;
+    const { mode, status, isPrivate, search, limit = 50, offset = 0 } = req.query;
     
     const filter = {};
     
@@ -21,14 +21,31 @@ const getRooms = async (req, res) => {
       filter.isPrivate = false;
     }
     
+    // Only show non-finished rooms by default
+    if (!status) {
+      filter.status = { $ne: 'finished' };
+    } else {
+      filter.status = status;
+    }
+    
+    // Mode filter: debug, bug-hunt, code-golf
     if (mode) filter.mode = mode;
-    if (status) filter.status = status;
+    
+    // Search by room name or invite code
+    if (search && search.trim()) {
+      const searchTerm = search.trim();
+      filter.$or = [
+        { name: { $regex: searchTerm, $options: 'i' } },
+        { inviteCode: { $regex: searchTerm, $options: 'i' } }
+      ];
+    }
     
     const rooms = await Room.find(filter)
       .sort({ createdAt: -1 })
       .skip(parseInt(offset))
       .limit(parseInt(limit))
-      .populate('createdBy', 'username');
+      .populate('createdBy', 'username')
+      .populate('players.userId', 'username');
     
     const total = await Room.countDocuments(filter);
     
