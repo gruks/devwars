@@ -22,6 +22,10 @@ const authenticate = async (req, res, next) => {
     // Get authorization header
     const authHeader = req.headers.authorization;
 
+    // DEBUG: Log what's received
+    console.log('[DEBUG authenticate] authHeader:', authHeader ? 'present' : 'missing');
+    console.log('[DEBUG authenticate] cookies:', req.cookies ? JSON.stringify(req.cookies) : 'undefined');
+
     // Check if header exists and has Bearer format
     let token = null;
     
