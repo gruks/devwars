@@ -133,7 +133,7 @@
 
 ---
 
-### Phase lobby-fix: Lobby Fix & Session Persistence ✓ COMPLETE (2026-02-14)
+### Phase lobby-fix: Lobby Fix & Session Persistence (In Progress)
 
 **Goal**: Fix lobby functionality, implement persistent sessions, and ensure database integration works properly
 
@@ -152,6 +152,7 @@
 - [x] lobby-fix-02 — Fix create room flow
 - [x] lobby-fix-03 — Database integration for room values
 - [x] lobby-fix-04 — Fix lobby functionality
+- [ ] lobby-fix-05 — Gap closure: Fix cookie-based auth in middleware
 
 ---
 
