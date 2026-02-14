@@ -8,6 +8,27 @@ const { asyncHandler } = require('../../utils/helpers.js');
 const { sendSuccess } = require('../../utils/helpers.js');
 const { HTTP_STATUS } = require('../../utils/constants.js');
 const { logger } = require('../../utils/logger.js');
+const { env } = require('../../config/env.js');
+
+/**
+ * Cookie configuration for httpOnly cookies
+ */
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: env.isProduction,
+  sameSite: 'lax',
+};
+
+/**
+ * Calculate refresh token expiry in milliseconds
+ * @param {boolean} rememberMe - Whether to extend session to 30 days
+ * @returns {number} Expiry in milliseconds
+ */
+const getRefreshTokenExpiry = (rememberMe) => {
+  // 30 days for remember me, 7 days otherwise
+  const days = rememberMe ? 30 : 7;
+  return days * 24 * 60 * 60 * 1000;
+};
 
 /**
  * Register a new user
@@ -50,9 +71,19 @@ const register = asyncHandler(async (req, res) => {
   // Call service
   const result = await authService.register({ username, email, password });
 
+  // Set httpOnly cookies for tokens
+  res.cookie('refreshToken', result.tokens.refreshToken, {
+    ...COOKIE_OPTIONS,
+    maxAge: getRefreshTokenExpiry(false),
+  });
+  res.cookie('accessToken', result.tokens.accessToken, {
+    ...COOKIE_OPTIONS,
+    maxAge: 15 * 60 * 1000, // 15 minutes
+  });
+
   logger.info(`User registered: ${result.user.email}`);
 
-  sendSuccess(res, 'User registered successfully', result, HTTP_STATUS.CREATED);
+  sendSuccess(res, 'User registered successfully', { user: result.user }, HTTP_STATUS.CREATED);
 });
 
 /**
@@ -60,7 +91,7 @@ const register = asyncHandler(async (req, res) => {
  * POST /api/v1/auth/login
  */
 const login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, rememberMe } = req.body;
 
   // Validate required fields
   if (!email || !password) {
@@ -81,9 +112,20 @@ const login = asyncHandler(async (req, res) => {
   // Call service
   const result = await authService.login({ email, password });
 
+  // Set httpOnly cookies for tokens
+  const rememberMeBool = rememberMe === true || rememberMe === 'true';
+  res.cookie('refreshToken', result.tokens.refreshToken, {
+    ...COOKIE_OPTIONS,
+    maxAge: getRefreshTokenExpiry(rememberMeBool),
+  });
+  res.cookie('accessToken', result.tokens.accessToken, {
+    ...COOKIE_OPTIONS,
+    maxAge: 15 * 60 * 1000, // 15 minutes
+  });
+
   logger.info(`User logged in: ${result.user.email}`);
 
-  sendSuccess(res, 'Login successful', result);
+  sendSuccess(res, 'Login successful', { user: result.user, rememberMe: rememberMeBool });
 });
 
 /**
