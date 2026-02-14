@@ -361,8 +361,10 @@ const leaveRoom = async (req, res) => {
       });
     }
     
+    // Find room
     const room = await Room.findById(id);
     
+    // Check room exists
     if (!room) {
       return res.status(404).json({
         success: false,
@@ -370,11 +372,49 @@ const leaveRoom = async (req, res) => {
       });
     }
     
-    await room.removePlayer(userId);
+    // Check user is in room
+    const isPlayerInRoom = room.players.some(p => p.userId.toString() === userId.toString());
+    if (!isPlayerInRoom) {
+      return res.status(400).json({
+        success: false,
+        message: 'You are not in this room'
+      });
+    }
+    
+    // Log departure timestamp for the leaving player
+    const player = room.players.find(p => p.userId.toString() === userId.toString());
+    if (player) {
+      player.departedAt = new Date();
+    }
+    
+    // Remove player from room
+    room.players = room.players.filter(p => p.userId.toString() !== userId.toString());
+    
+    // If room becomes empty, delete it
+    if (room.players.length === 0) {
+      await room.deleteOne();
+      return res.json({
+        success: true,
+        message: 'Left room successfully (room deleted)'
+      });
+    }
+    
+    // If host leaves, assign new host to first remaining player
+    if (room.createdBy.toString() === userId.toString() && room.players.length > 0) {
+      const newHostId = room.players[0].userId;
+      room.createdBy = newHostId;
+    }
+    
+    await room.save();
+    
+    // Populate and return updated room
+    await room.populate('createdBy', 'username');
+    await room.populate('players.userId', 'username');
     
     res.json({
       success: true,
-      message: 'Left room successfully'
+      message: 'Left room successfully',
+      data: room
     });
   } catch (error) {
     res.status(500).json({
