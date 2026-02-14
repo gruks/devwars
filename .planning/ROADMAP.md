@@ -130,6 +130,28 @@
 
 ---
 
+### Phase lobby-fix: Lobby Fix & Session Persistence ✓ COMPLETE (2026-02-14)
+
+**Goal**: Fix lobby functionality, implement persistent sessions, and ensure database integration works properly
+
+**Duration**: ~4 plans
+
+**Delivers**:
+- Persistent sessions (no repeated login) ✓
+- httpOnly cookie-based authentication ✓
+- Create room working end-to-end ✓
+- Room values stored in database with timestamps ✓
+- Player assignment with timestamps ✓
+- Lobby list, filtering, search working ✓
+
+**Plans**:
+- [x] lobby-fix-01 — Session persistence with httpOnly cookies
+- [x] lobby-fix-02 — Fix create room flow
+- [x] lobby-fix-03 — Database integration for room values
+- [x] lobby-fix-04 — Fix lobby functionality
+
+---
+
 ## Success Criteria
 
 ### MVP Complete When:
