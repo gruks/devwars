@@ -7,6 +7,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
 
 // Load environment config first (triggers dotenv)
 const { env } = require('./config/env.js');
@@ -26,6 +27,9 @@ app.use(cors({
   origin: env.isDevelopment ? allowedOrigins.length > 0 ? allowedOrigins : true : allowedOrigins,
   credentials: true
 }));
+
+// Cookie parsing middleware
+app.use(cookieParser());
 
 // Body parsing middleware
 app.use(express.json({ limit: '10kb' }));

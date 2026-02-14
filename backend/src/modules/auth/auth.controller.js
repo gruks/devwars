@@ -133,7 +133,12 @@ const login = asyncHandler(async (req, res) => {
  * POST /api/v1/auth/refresh
  */
 const refreshToken = asyncHandler(async (req, res) => {
-  const { refreshToken } = req.body;
+  // Get refresh token from httpOnly cookie
+  const refreshTokenFromCookie = req.cookies?.refreshToken;
+
+  // Fallback to body for backwards compatibility
+  const refreshTokenFromBody = req.body?.refreshToken;
+  const refreshToken = refreshTokenFromCookie || refreshTokenFromBody;
 
   // Validate required field
   if (!refreshToken) {
@@ -146,7 +151,17 @@ const refreshToken = asyncHandler(async (req, res) => {
   // Call service
   const result = await authService.refreshToken(refreshToken);
 
-  sendSuccess(res, 'Token refreshed successfully', result);
+  // Set new httpOnly cookies for refreshed tokens
+  res.cookie('refreshToken', result.tokens.refreshToken, {
+    ...COOKIE_OPTIONS,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (use default from refresh)
+  });
+  res.cookie('accessToken', result.tokens.accessToken, {
+    ...COOKIE_OPTIONS,
+    maxAge: 15 * 60 * 1000, // 15 minutes
+  });
+
+  sendSuccess(res, 'Token refreshed successfully', { user: result.user });
 });
 
 /**
@@ -155,10 +170,15 @@ const refreshToken = asyncHandler(async (req, res) => {
  */
 const logout = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
-  const { refreshToken } = req.body;
+  // Get refresh token from cookie (preferred) or body (fallback)
+  const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
 
   // Call service (works even without userId for "logout everywhere" effect)
   const result = await authService.logout(userId, refreshToken);
+
+  // Clear httpOnly cookies
+  res.clearCookie('refreshToken', COOKIE_OPTIONS);
+  res.clearCookie('accessToken', COOKIE_OPTIONS);
 
   if (userId) {
     logger.info(`User logged out: ${userId}`);

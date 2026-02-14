@@ -116,7 +116,7 @@ const login = async ({ email, password }) => {
 /**
  * Refresh access token using refresh token
  * @param {string} refreshToken - Current refresh token
- * @returns {Promise<Object>} { tokens }
+ * @returns {Promise<Object>} { tokens, user }
  * @throws {AppError} 401 if token invalid or expired
  */
 const refreshToken = async (refreshToken) => {
@@ -160,7 +160,7 @@ const refreshToken = async (refreshToken) => {
   // Save new refresh token
   await user.addRefreshToken(tokens.refreshToken);
 
-  return { tokens };
+  return { tokens, user: user.toJSON() };
 };
 
 /**
