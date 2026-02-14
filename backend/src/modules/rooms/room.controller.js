@@ -381,11 +381,89 @@ const getLobbyStats = async (req, res) => {
   }
 };
 
+/**
+ * Start a match
+ * POST /api/v1/lobby/rooms/:id/start
+ */
+const startMatch = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?._id;
+    
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+    
+    const room = await Room.findById(id);
+    
+    if (!room) {
+      return res.status(404).json({
+        success: false,
+        message: 'Room not found'
+      });
+    }
+    
+    // Only host can start match
+    if (room.createdBy.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only room host can start the match'
+      });
+    }
+    
+    // Check room status
+    if (room.status !== 'waiting') {
+      return res.status(400).json({
+        success: false,
+        message: `Match cannot be started from ${room.status} status`
+      });
+    }
+    
+    // Need at least 2 players
+    if (room.players.length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'Need at least 2 players to start'
+      });
+    }
+    
+    // Start the match using model method
+    await room.startMatch();
+    await room.populate('createdBy', 'username');
+    await room.populate('players.userId', 'username');
+    
+    // Broadcast to all players via socket (if socket service available)
+    if (req.io) {
+      req.io.to(`room-${id}`).emit('match-started', {
+        roomId: id,
+        startedAt: room.startedAt,
+        players: room.players
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Match started successfully',
+      data: room
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to start match',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getRooms,
   createRoom,
   getRoom,
   joinRoom,
   leaveRoom,
-  getLobbyStats
+  getLobbyStats,
+  startMatch
 };
