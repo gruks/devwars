@@ -55,18 +55,21 @@
 
 **Goal**: Implement real-time communication infrastructure and lobby system
 
-**Duration**: ~2 plans
+**Duration**: ~3 plans
 
 **Delivers**:
-- Socket.io server setup
-- Socket authentication middleware
-- Lobby system (rooms list, player status)
-- Room creation and joining
-- Basic socket events (LOBBY_JOIN, ROOM_CREATE, ROOM_JOIN, ROOM_LEAVE)
+- Socket.io server setup with Redis adapter
+- Cookie-based socket authentication middleware
+- Domain:action event naming convention
+- Lobby system (rooms list, player status, real-time updates)
+- Room creation and joining with socket events
+- Room chat functionality
+- Player ready status and match start
 
 **Plans**:
-- [ ] 02-01 — Socket.io setup and authentication
-- [ ] 02-02 — Lobby and room management
+- [ ] 02-01-PLAN.md — Socket.io setup with Redis adapter and cookie auth
+- [ ] 02-02-PLAN.md — Lobby and room socket handlers with frontend SocketContext
+- [ ] 02-03-PLAN.md — Room chat, ready status, and Room page integration
 
 ---
 

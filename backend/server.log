@@ -1,0 +1,8 @@
+MongoDB connected successfully { host: 'localhost', port: 27017, database: 'devwars' }
+2026-02-14 11:50:34 [[32minfo[39m]: [32mDatabase connection established[39m {"service":"devwars-api"}
+2026-02-14 11:50:34 [[32minfo[39m]: [32m Server running on port http://localhost:3000[39m {"service":"devwars-api"}
+2026-02-14 11:50:34 [[32minfo[39m]: [32m Environment: development[39m {"service":"devwars-api"}
+2026-02-14 11:50:34 [[32minfo[39m]: [32m Health check: http://localhost:3000/health[39m {"service":"devwars-api"}
+(node:31156) [MONGOOSE] Warning: mongoose: Duplicate schema index on {"email":1} for model "User". This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:31156) [MONGOOSE] Warning: mongoose: Duplicate schema index on {"username":1} for model "User". This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
