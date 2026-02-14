@@ -3,7 +3,7 @@
 ## Current Phase
 
 **Phase**: lobby-fix
-**Status**: In Progress - 1 of N plans complete
+**Status**: Complete - 4 of 4 plans complete
 
 ## Phase Plans
 
@@ -27,6 +27,13 @@
 - Match results endpoint with duration calculation
 - Frontend status badges (waiting/playing/finished)
 - Relative time display for room creation
+
+### lobby-fix-04: Lobby Functionality ✓ Complete
+- Room listing with mode/status/search filtering
+- Join room endpoint with validation (exists, waiting, not full, not joined)
+- Leave room endpoint with host transfer and empty room deletion
+- Lobby auto-refresh polling with graceful error handling
+- Frontend refresh after successful join
 
 ## What's Been Built
 
@@ -57,6 +64,11 @@
 - [x] Match start/end endpoints with authorization
 - [x] Player stats updates on match completion (wins/losses/rating)
 - [x] Frontend room status display (waiting/playing/finished)
+- [x] Room filtering by mode, status, and search
+- [x] Join/leave room with proper validation
+- [x] Lobby auto-refresh with 5-second polling
+- [x] Host transfer on leave
+- [x] Empty room auto-deletion
 
 ## What's Next
 
@@ -75,7 +87,7 @@
 
 ```
 Phase 1: Foundation    [██████████] 100% (3/3 plans)
-Phase lobby-fix        [████████░░]  75% (3/4 plans)
+Phase lobby-fix        [██████████] 100% (4/4 plans)
 Overall                [░░░░░░░░░░]   0% (1/4+ plans)
 ```
 
@@ -113,6 +125,15 @@ Overall                [░░░░░░░░░░]   0% (1/4+ plans)
 | Frontend framework | React, Vue, Svelte | Phase 2 |
 
 ## Recent Decisions
+
+### lobby-fix-04 (Lobby Functionality)
+
+19. **Lobby room filtering** (2026-02-14) - Default to non-finished rooms only; support mode, status, and search filters via query params
+20. **Search implementation** (2026-02-14) - Case-insensitive regex search on room name and invite code
+21. **Join validation** (2026-02-14) - Validate room exists, status is waiting, not at capacity, user not already joined
+22. **Host transfer logic** (2026-02-14) - When host leaves, first remaining player becomes new host
+23. **Empty room cleanup** (2026-02-14) - Rooms are deleted when last player leaves to keep database clean
+24. **Polling error handling** (2026-02-14) - Silent fail on polling errors to maintain UX without disruption
 
 ### lobby-fix-03 (Room Lifecycle)
 
@@ -164,7 +185,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed lobby-fix-03-PLAN.md (Room Lifecycle and Timestamps)
-- **Commits**: 4 atomic commits + 1 submodule reference commit
-- **Duration**: 3 minutes
+- **Stopped At**: Completed lobby-fix-04-PLAN.md (Lobby Functionality)
+- **Commits**: 5 atomic commits + 1 submodule reference commit
+- **Duration**: 15 minutes
 - **Completed**: 2026-02-14
