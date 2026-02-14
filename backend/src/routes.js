@@ -64,6 +64,17 @@ router.use('/auth', require('./modules/auth/auth.routes.js'));
 router.use('/users', require('./modules/users/user.routes.js'));
 
 /**
+ * Lobby/Room routes
+ * GET /api/v1/lobby/rooms - Get all rooms
+ * POST /api/v1/lobby/rooms - Create room (protected)
+ * GET /api/v1/lobby/rooms/:id - Get room
+ * POST /api/v1/lobby/rooms/:id/join - Join room (protected)
+ * POST /api/v1/lobby/rooms/:id/leave - Leave room (protected)
+ * GET /api/v1/lobby/stats - Get lobby stats
+ */
+router.use('/lobby', require('./modules/rooms/room.routes.js'));
+
+/**
  * Future module routes:
  * 
  * router.use('/users', require('./modules/users/user.routes'));
