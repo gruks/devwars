@@ -77,20 +77,21 @@
 
 **Goal**: Build the core game mechanics and battle system
 
-**Duration**: ~3 plans
+**Duration**: ~4 plans
 
 **Delivers**:
-- Debug battle engine
-- Buggy code repository
-- Test case system
-- Timer synchronization
-- Match state management
-- Socket events (MATCH_START, CODE_UPDATE, CODE_SUBMIT, PLAYER_SOLVED, MATCH_END)
+- Debug battle engine ✓
+- Buggy code repository ✓
+- Test case system ✓
+- Timer synchronization ✓
+- Match state management ✓
+- Socket events (MATCH_START, CODE_UPDATE, CODE_SUBMIT, PLAYER_SOLVED, MATCH_END) ✓
 
 **Plans**:
-- [ ] 03-01 — Battle engine and game logic
-- [ ] 03-02 — Match state management
-- [ ] 03-03 — Game socket events and synchronization
+- [x] 03-01-PLAN.md — Question model + seeding API
+- [x] 03-02-PLAN.md — Execution service + testcase evaluation
+- [x] 03-03-PLAN.md — Match state management
+- [x] 03-04-PLAN.md — Game socket events + room integration
 
 ---
 
