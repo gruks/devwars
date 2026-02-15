@@ -7,8 +7,7 @@
 const { env } = require('./config/env.js');
 const { logger } = require('./utils/logger.js');
 const { connectDB } = require('./config/db.js');
-const { app } = require('./app.js');
-
+const { app, sessionMiddleware } = require('./app.js');
 const PORT = env.PORT;
 
 // Start server with database connection
@@ -17,7 +16,7 @@ const startServer = async () => {
     // Connect to MongoDB first
     await connectDB();
     logger.info('Database connection established');
-    
+
     // Create HTTP server
     const httpServer = app.listen(PORT, () => {
       logger.info(` Server running on port http://localhost:${PORT}`);
@@ -25,20 +24,20 @@ const startServer = async () => {
       logger.info(` Health check: http://localhost:${PORT}/health`);
       logger.info(` Socket.io enabled for real-time features`);
     });
-    
+
     // Initialize Socket.io
     const { initializeSocket } = require('./config/socket.js');
     const { Server } = require('socket.io');
-    
+
     const io = new Server(httpServer, {
       cors: {
-        origin: env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173', 'http://localhost:8080'],
+        origin: env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || ['http://localhost:5173', 'http://localhost:8080'],
         credentials: true
       }
     });
-    
-    initializeSocket(io);
-    
+
+    initializeSocket(io, sessionMiddleware);
+
     return httpServer;
   } catch (error) {
     logger.error('Failed to start server:', error);
@@ -52,7 +51,7 @@ const server = startServer();
 process.on('unhandledRejection', (err) => {
   logger.error('Unhandled Rejection:', err.message);
   logger.error(err.stack);
-  
+
   // Graceful shutdown
   server.then(s => s.close(() => {
     logger.info('Server closed due to unhandled rejection');
@@ -64,7 +63,7 @@ process.on('unhandledRejection', (err) => {
 process.on('uncaughtException', (err) => {
   logger.error('Uncaught Exception:', err.message);
   logger.error(err.stack);
-  
+
   // Exit immediately - uncaught exceptions leave app in undefined state
   process.exit(1);
 });
@@ -72,7 +71,7 @@ process.on('uncaughtException', (err) => {
 // Handle SIGTERM (e.g., from Docker, Kubernetes)
 process.on('SIGTERM', () => {
   logger.info('SIGTERM received. Shutting down gracefully...');
-  
+
   server.then(s => s.close(() => {
     logger.info('Server closed');
     process.exit(0);
@@ -82,7 +81,7 @@ process.on('SIGTERM', () => {
 // Handle SIGINT (Ctrl+C)
 process.on('SIGINT', () => {
   logger.info('SIGINT received. Shutting down gracefully...');
-  
+
   server.then(s => s.close(() => {
     logger.info('Server closed');
     process.exit(0);

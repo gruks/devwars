@@ -1,65 +1,34 @@
 /**
  * Auth middleware
- * JWT verification and role authorization
+ * Session-based authentication and role authorization
  */
 
-const jwt = require('jsonwebtoken');
 const { User } = require('../users/user.model.js');
-const { env } = require('../../config/env.js');
 const { AppError } = require('../../middlewares/error.js');
 const { HTTP_STATUS } = require('../../utils/constants.js');
 const { logger } = require('../../utils/logger.js');
 
 /**
- * Authenticate request using JWT
- * Verifies access token and attaches user to request
+ * Authenticate request using Session
+ * Verifies session and attaches user to request
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  * @param {Function} next - Express next middleware function
  */
 const authenticate = async (req, res, next) => {
   try {
-    // Get authorization header
-    const authHeader = req.headers.authorization;
-
-    // DEBUG: Log what's received
-    console.log('[DEBUG authenticate] authHeader:', authHeader ? 'present' : 'missing');
-    console.log('[DEBUG authenticate] cookies:', req.cookies ? JSON.stringify(req.cookies) : 'undefined');
-
-    // Check if header exists and has Bearer format
-    let token = null;
-    
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      // Authorization header takes precedence
-      token = authHeader.split(' ')[1];
-    } else {
-      // Fallback to cookie-based auth (for browser sessions)
-      token = req.cookies?.accessToken;
+    // Check if user is authenticated via session
+    if (!req.session || !req.session.userId) {
+      throw new AppError('Access denied. Please login.', HTTP_STATUS.UNAUTHORIZED);
     }
 
-    if (!token) {
-      throw new AppError('Access token required', HTTP_STATUS.UNAUTHORIZED);
-    }
-
-    // Verify token
-    let decoded;
-    try {
-      decoded = jwt.verify(token, env.JWT_SECRET);
-    } catch (error) {
-      if (error.name === 'TokenExpiredError') {
-        throw new AppError('Token expired', HTTP_STATUS.UNAUTHORIZED);
-      }
-      if (error.name === 'JsonWebTokenError') {
-        throw new AppError('Invalid token', HTTP_STATUS.UNAUTHORIZED);
-      }
-      throw new AppError('Token verification failed', HTTP_STATUS.UNAUTHORIZED);
-    }
-
-    // Find user by ID from token
-    const user = await User.findById(decoded.userId);
+    // Find user by ID from session
+    const user = await User.findById(req.session.userId);
 
     if (!user) {
-      throw new AppError('User not found', HTTP_STATUS.UNAUTHORIZED);
+      // Clear invalid session
+      req.session.destroy();
+      throw new AppError('User not found. Please login again.', HTTP_STATUS.UNAUTHORIZED);
     }
 
     // Check if user is active
@@ -81,9 +50,6 @@ const authenticate = async (req, res, next) => {
  * Returns middleware that checks if user's role is in allowed roles
  * @param  {...string} roles - Allowed roles
  * @returns {Function} Express middleware
- * @example
- * router.get('/admin', authenticate, authorize('admin'), adminHandler);
- * router.get('/mod', authenticate, authorize('admin', 'moderator'), modHandler);
  */
 const authorize = (...roles) => {
   return (req, res, next) => {
@@ -104,44 +70,21 @@ const authorize = (...roles) => {
 
 /**
  * Optional authentication middleware
- * Attaches user to request if token is valid, but doesn't require it
- * Useful for endpoints that work for both authenticated and anonymous users
+ * Attaches user to request if session is valid, but doesn't require it
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  * @param {Function} next - Express next middleware function
  */
 const optionalAuth = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-
-    // Check Authorization header first
-    let token = null;
-    
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.split(' ')[1];
-    } else {
-      // Fallback to cookie-based auth (for browser sessions)
-      token = req.cookies?.accessToken;
+    if (req.session && req.session.userId) {
+      const user = await User.findById(req.session.userId);
+      if (user && user.isActive) {
+        req.user = user;
+      }
     }
-
-    if (!token) {
-      // No token provided, continue without user
-      return next();
-    }
-
-    // Verify token
-    const decoded = jwt.verify(token, env.JWT_SECRET);
-
-    // Find user
-    const user = await User.findById(decoded.userId);
-
-    if (user && user.isActive) {
-      req.user = user;
-    }
-
     next();
   } catch (error) {
-    // Token invalid, continue without user
     next();
   }
 };

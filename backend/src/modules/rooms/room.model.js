@@ -112,14 +112,14 @@ const roomSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Virtual for player count
+// Virtual for player count (only active players)
 roomSchema.virtual('playerCount').get(function() {
-  return this.players.length;
+  return this.players.filter(p => !p.departedAt).length;
 });
 
-// Virtual for isFull
+// Virtual for isFull (only active players)
 roomSchema.virtual('isFull').get(function() {
-  return this.players.length >= this.maxPlayers;
+  return this.playerCount >= this.maxPlayers;
 });
 
 // Check if room is joinable

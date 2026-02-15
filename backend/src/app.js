@@ -8,6 +8,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const { MongoStore } = require('connect-mongo');
 
 // Load environment config first (triggers dotenv)
 const { env } = require('./config/env.js');
@@ -30,6 +32,25 @@ app.use(cors({
 
 // Cookie parsing middleware
 app.use(cookieParser());
+// Session middleware
+const sessionMiddleware = session({
+  secret: env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: env.MONGODB_URI,
+    collectionName: 'sessions',
+    ttl: 7 * 24 * 60 * 60 // 7 days
+  }),
+  cookie: {
+    httpOnly: true,
+    secure: env.isProduction,
+    sameSite: env.isProduction ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  }
+});
+
+app.use(sessionMiddleware);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10kb' }));
@@ -68,4 +89,4 @@ app.use(notFoundHandler);
 // Global error handler - must be last
 app.use(errorHandler);
 
-module.exports = { app };
+module.exports = { app, sessionMiddleware };

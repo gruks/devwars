@@ -62,10 +62,6 @@ const userSchema = new mongoose.Schema({
       default: 1000
     }
   },
-  refreshTokens: [{
-    type: String,
-    select: false
-  }],
   isActive: {
     type: Boolean,
     default: true
@@ -84,10 +80,10 @@ userSchema.index({ username: 1 }, { unique: true });
  * Pre-save hook to hash password before saving
  * Only hashes if password is modified (not on every save)
  */
-userSchema.pre('save', async function() {
+userSchema.pre('save', async function () {
   // Only hash if password is modified
   if (!this.isModified('password')) return;
-  
+
   // Generate salt and hash password
   const salt = await bcrypt.genSalt(env.BCRYPT_ROUNDS || 12);
   this.password = await bcrypt.hash(this.password, salt);
@@ -98,7 +94,7 @@ userSchema.pre('save', async function() {
  * @param {string} candidatePassword - Password to compare
  * @returns {Promise<boolean>} True if password matches
  */
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
@@ -106,10 +102,9 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
  * Override toJSON to remove sensitive fields
  * This ensures password and refresh tokens are never sent in responses
  */
-userSchema.methods.toJSON = function() {
+userSchema.methods.toJSON = function () {
   const user = this.toObject();
   delete user.password;
-  delete user.refreshTokens;
   return user;
 };
 
@@ -117,7 +112,7 @@ userSchema.methods.toJSON = function() {
  * Update user stats after a match
  * @param {boolean} won - Whether the user won the match
  */
-userSchema.methods.updateStats = async function(won) {
+userSchema.methods.updateStats = async function (won) {
   if (won) {
     this.stats.wins += 1;
     this.stats.rating += 10;
@@ -126,38 +121,6 @@ userSchema.methods.updateStats = async function(won) {
     this.stats.rating = Math.max(0, this.stats.rating - 10);
   }
   this.stats.matchesPlayed += 1;
-  await this.save();
-};
-
-/**
- * Add refresh token to user's token list
- * @param {string} token - Refresh token to add
- */
-userSchema.methods.addRefreshToken = async function(token) {
-  if (!this.refreshTokens) {
-    this.refreshTokens = [];
-  }
-  this.refreshTokens.push(token);
-  await this.save();
-};
-
-/**
- * Remove refresh token from user's token list
- * @param {string} token - Refresh token to remove
- */
-userSchema.methods.removeRefreshToken = async function(token) {
-  if (!this.refreshTokens) {
-    this.refreshTokens = [];
-  }
-  this.refreshTokens = this.refreshTokens.filter(t => t !== token);
-  await this.save();
-};
-
-/**
- * Clear all refresh tokens (logout from all devices)
- */
-userSchema.methods.clearRefreshTokens = async function() {
-  this.refreshTokens = [];
   await this.save();
 };
 

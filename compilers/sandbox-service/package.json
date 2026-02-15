@@ -1,0 +1,25 @@
+{
+  "name": "sandbox-service",
+  "version": "1.0.0",
+  "description": "Secure code execution microservice for DevWars multiplayer coding platform",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "worker": "node src/workers/executor.js"
+  },
+  "keywords": ["sandbox", "code-execution", "docker", "microservice"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@fastify/env": "^4.3.0",
+    "bullmq": "^5.1.0",
+    "dockerode": "^4.0.2",
+    "dotenv": "^16.4.0",
+    "fastify": "^4.26.0",
+    "ioredis": "^5.3.2",
+    "pino": "^8.19.0",
+    "pino-pretty": "^10.3.0"
+  }
+}

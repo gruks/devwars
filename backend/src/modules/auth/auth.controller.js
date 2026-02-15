@@ -9,25 +9,18 @@ const { sendSuccess } = require('../../utils/helpers.js');
 const { HTTP_STATUS } = require('../../utils/constants.js');
 const { logger } = require('../../utils/logger.js');
 const { env } = require('../../config/env.js');
+const { User } = require('../users/user.model.js');
 
 /**
  * Cookie configuration for httpOnly cookies
+ * Note: sameSite 'none' requires secure=true, but in development we use 'lax'
+ * For production with HTTPS, use 'none' for better cross-origin support
  */
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: env.isProduction,
-  sameSite: 'lax',
-};
-
-/**
- * Calculate refresh token expiry in milliseconds
- * @param {boolean} rememberMe - Whether to extend session to 30 days
- * @returns {number} Expiry in milliseconds
- */
-const getRefreshTokenExpiry = (rememberMe) => {
-  // 30 days for remember me, 7 days otherwise
-  const days = rememberMe ? 30 : 7;
-  return days * 24 * 60 * 60 * 1000;
+  secure: env.isProduction, // Must be true for sameSite: 'none'
+  sameSite: env.isProduction ? 'none' : 'lax', // 'none' for cross-origin, 'lax' for dev
+  path: '/', // Explicit path to ensure cookies are sent with all requests
 };
 
 /**
@@ -71,15 +64,10 @@ const register = asyncHandler(async (req, res) => {
   // Call service
   const result = await authService.register({ username, email, password });
 
-  // Set httpOnly cookies for tokens
-  res.cookie('refreshToken', result.tokens.refreshToken, {
-    ...COOKIE_OPTIONS,
-    maxAge: getRefreshTokenExpiry(false),
-  });
-  res.cookie('accessToken', result.tokens.accessToken, {
-    ...COOKIE_OPTIONS,
-    maxAge: 15 * 60 * 1000, // 15 minutes
-  });
+  // Store user info in session
+  req.session.userId = result.user._id;
+  req.session.email = result.user.email;
+  req.session.save();
 
   logger.info(`User registered: ${result.user.email}`);
 
@@ -112,16 +100,17 @@ const login = asyncHandler(async (req, res) => {
   // Call service
   const result = await authService.login({ email, password });
 
-  // Set httpOnly cookies for tokens
+  // Store user info in session
   const rememberMeBool = rememberMe === true || rememberMe === 'true';
-  res.cookie('refreshToken', result.tokens.refreshToken, {
-    ...COOKIE_OPTIONS,
-    maxAge: getRefreshTokenExpiry(rememberMeBool),
-  });
-  res.cookie('accessToken', result.tokens.accessToken, {
-    ...COOKIE_OPTIONS,
-    maxAge: 15 * 60 * 1000, // 15 minutes
-  });
+  req.session.userId = result.user._id;
+  req.session.email = result.user.email;
+
+  if (rememberMeBool) {
+    // Extend session life if rememberMe is selected
+    req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+  }
+
+  req.session.save();
 
   logger.info(`User logged in: ${result.user.email}`);
 
@@ -129,39 +118,24 @@ const login = asyncHandler(async (req, res) => {
 });
 
 /**
- * Refresh access token
+ * Refresh/Verify Session
  * POST /api/v1/auth/refresh
+ * Used by frontend as a heartbeat/session check
  */
 const refreshToken = asyncHandler(async (req, res) => {
-  // Get refresh token from httpOnly cookie
-  const refreshTokenFromCookie = req.cookies?.refreshToken;
-
-  // Fallback to body for backwards compatibility
-  const refreshTokenFromBody = req.body?.refreshToken;
-  const refreshToken = refreshTokenFromCookie || refreshTokenFromBody;
-
-  // Validate required field
-  if (!refreshToken) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      success: false,
-      message: 'Please provide refresh token'
-    });
+  // If user has a valid session, just confirm it's still alive
+  if (req.session && req.session.userId) {
+    const user = await User.findById(req.session.userId);
+    if (user && user.isActive) {
+      return sendSuccess(res, 'Session is valid', { user });
+    }
   }
 
-  // Call service
-  const result = await authService.refreshToken(refreshToken);
-
-  // Set new httpOnly cookies for refreshed tokens
-  res.cookie('refreshToken', result.tokens.refreshToken, {
-    ...COOKIE_OPTIONS,
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (use default from refresh)
+  // If no session, return 401
+  return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+    success: false,
+    message: 'Authentication required'
   });
-  res.cookie('accessToken', result.tokens.accessToken, {
-    ...COOKIE_OPTIONS,
-    maxAge: 15 * 60 * 1000, // 15 minutes
-  });
-
-  sendSuccess(res, 'Token refreshed successfully', { user: result.user });
 });
 
 /**
@@ -170,13 +144,19 @@ const refreshToken = asyncHandler(async (req, res) => {
  */
 const logout = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
-  // Get refresh token from cookie (preferred) or body (fallback)
-  const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
 
-  // Call service (works even without userId for "logout everywhere" effect)
-  const result = await authService.logout(userId, refreshToken);
+  // Call service
+  const result = await authService.logout(userId);
 
-  // Clear httpOnly cookies
+  // Clear session
+  req.session.destroy((err) => {
+    if (err) {
+      logger.error('Error destroying session:', err);
+    }
+  });
+
+  // Clear legacy/security cookies
+  res.clearCookie('connect.sid', COOKIE_OPTIONS);
   res.clearCookie('refreshToken', COOKIE_OPTIONS);
   res.clearCookie('accessToken', COOKIE_OPTIONS);
 

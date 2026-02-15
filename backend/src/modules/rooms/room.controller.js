@@ -320,6 +320,28 @@ const joinRoom = async (req, res) => {
       });
     }
     
+    // Check if user previously departed and can rejoin (room still waiting)
+    const departedPlayer = room.players.find(p => 
+      p.userId.toString() === userId.toString() && p.departedAt
+    );
+    
+    if (departedPlayer) {
+      // Rejoin: clear departedAt, update lastActiveAt
+      departedPlayer.departedAt = undefined;
+      departedPlayer.lastActiveAt = new Date();
+      departedPlayer.isReady = true;
+      await room.save();
+      
+      await room.populate('createdBy', 'username');
+      await room.populate('players.userId', 'username');
+      
+      return res.json({
+        success: true,
+        message: 'Rejoined room successfully',
+        data: room
+      });
+    }
+    
     // Add player to room with joinedAt timestamp
     room.players.push({ 
       userId, 
@@ -383,28 +405,33 @@ const leaveRoom = async (req, res) => {
       });
     }
     
-    // Log departure timestamp for the leaving player
+    // Log departure timestamp for the leaving player (keep in array for rejoin support)
     const player = room.players.find(p => p.userId.toString() === userId.toString());
     if (player) {
       player.departedAt = new Date();
     }
     
-    // Remove player from room
-    room.players = room.players.filter(p => p.userId.toString() !== userId.toString());
+    // Keep departed player in array for rejoin support - don't remove them
+    // But if host leaves, transfer host to next active player
     
-    // If room becomes empty, delete it
-    if (room.players.length === 0) {
+    // If host leaves, assign new host to first remaining active player
+    if (room.createdBy.toString() === userId.toString()) {
+      const activePlayers = room.players.filter(p => 
+        p.userId.toString() !== userId.toString() && !p.departedAt
+      );
+      if (activePlayers.length > 0) {
+        room.createdBy = activePlayers[0].userId;
+      }
+    }
+    
+    // If room has no active players (all departed), delete it
+    const hasActivePlayers = room.players.some(p => !p.departedAt);
+    if (!hasActivePlayers) {
       await room.deleteOne();
       return res.json({
         success: true,
         message: 'Left room successfully (room deleted)'
       });
-    }
-    
-    // If host leaves, assign new host to first remaining player
-    if (room.createdBy.toString() === userId.toString() && room.players.length > 0) {
-      const newHostId = room.players[0].userId;
-      room.createdBy = newHostId;
     }
     
     await room.save();

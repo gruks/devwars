@@ -5,7 +5,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { authenticate, authorize } = require('../../middleware/auth.js');
+const { authenticate, authorize } = require('../../middlewares/auth.js');
 const matchController = require('./match.controller.js');
 const { Room } = require('../rooms/room.model.js');
 const { logger } = require('../../utils/logger.js');
