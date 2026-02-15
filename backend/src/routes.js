@@ -84,6 +84,12 @@ router.use('/lobby', require('./modules/rooms/room.routes.js'));
 router.use('/questions', require('./modules/questions/question.routes.js'));
 
 /**
+ * Evaluation routes
+ * POST /api/v1/evaluation/evaluate - Evaluate code submission (protected)
+ */
+router.use('/evaluation', require('./modules/evaluation/evaluation.routes.js'));
+
+/**
  * Future module routes:
  * 
  * router.use('/users', require('./modules/users/user.routes'));
