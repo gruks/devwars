@@ -101,7 +101,7 @@
 
 **Goal**: Implement secure code execution with Docker isolation
 
-**Duration**: ~2 plans
+**Duration**: 2 plans
 
 **Delivers**:
 - Docker execution environment
@@ -112,8 +112,8 @@
 - Socket event (EXEC_RESULT)
 
 **Plans**:
-- [ ] 04-01 — Docker setup and queue system
-- [ ] 04-02 — Code execution worker and integration
+- [ ] 04-01-PLAN.md — Fix queue system and make sandbox-service runnable
+- [ ] 04-02-PLAN.md — Backend integration and Docker Compose
 
 ---
 
