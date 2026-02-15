@@ -3,8 +3,8 @@
 ## Current Phase
 
 **Phase**: 03-game-engine
-**Status**: In Progress - 2 of ? plans complete
-**Current Plan**: 03-02 Execution Service and Evaluation ✓ Complete
+**Status**: In Progress - 3 of ? plans complete
+**Current Plan**: 03-03 Match State Management ✓ Complete
 
 ## Phase Plans
 
@@ -84,6 +84,11 @@
 - [x] Testcase evaluation engine with output comparison
 - [x] Code submission evaluation endpoint with score calculation
 - [x] Detailed pass/fail results with runtime and memory metrics
+- [x] Match MongoDB model with submissions and players
+- [x] Match service with full lifecycle (create/start/submit/end)
+- [x] Match API endpoints with host-only authorization
+- [x] First blood detection and winner calculation
+- [x] User stats updates on match completion
 
 ## What's Next
 
@@ -94,17 +99,18 @@
 **Completed Plans**:
 1. ~~03-01 — Question Model and API~~ ✓ Complete
 2. ~~03-02 — Execution Service and Evaluation~~ ✓ Complete
+3. ~~03-03 — Match State Management~~ ✓ Complete
 
-**Next Plan**: 03-03 - Match State Management
+**Next Plan**: 03-04 - Real-time Game Updates
 
-**Description**: Build match state management for debug battle mode:
-- Match state machine (waiting, in-progress, finished)
-- Player submission tracking
-- Real-time game state updates via Socket.io
-- Match lifecycle management (start, end, cleanup)
-- Leaderboard and scoring within matches
+**Description**: Add Socket.io for real-time game state synchronization:
+- Socket.io integration with authentication
+- Real-time match state broadcasting
+- Player presence and activity tracking
+- Code submission real-time updates
+- Leaderboard updates during matches
 
-**Dependencies**: Question model (✓), Execution service (✓)
+**Dependencies**: Match model (✓), Room model (✓), Auth system (✓)
 
 ## Progress
 
@@ -129,6 +135,7 @@ Overall                [░░░░░░░░░░]   0% (1/4+ plans)
 | Queue | BullMQ | Redis-based, Node-native |
 | Auth | JWT | Stateless, scalable |
 | Execution | Docker | Security isolation |
+- [Phase 03-game-engine]: Match status flow: waiting -> active -> finished with host-only transitions — Prevents invalid state changes and ensures fair game control
 
 ### Recent Decisions (01-01)
 
@@ -148,6 +155,13 @@ Overall                [░░░░░░░░░░]   0% (1/4+ plans)
 | Frontend framework | React, Vue, Svelte | Phase 2 |
 
 ## Recent Decisions
+
+### 03-03 (Match State Management)
+
+35. **Match status flow** (2026-02-15) - Clear state machine: waiting → active → finished with host-only transitions for fairness
+36. **Winner determination** (2026-02-15) - Highest score wins; earliest solve time breaks ties for competitive balance
+37. **Submissions history** (2026-02-15) - Store full submission data with test results for replay, debugging, and analytics
+38. **Host-only middleware** (2026-02-15) - Reusable middleware validates room creator for privileged match actions
 
 ### 03-02 (Execution Service and Evaluation)
 
@@ -224,7 +238,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed 03-02-PLAN.md (Execution Service and Evaluation)
+- **Stopped At**: Completed 03-03-PLAN.md (Match State Management)
 - **Commits**: 3 atomic commits (feat)
 - **Duration**: 3m
 - **Completed**: 2026-02-15
