@@ -5,6 +5,8 @@
 
 const { Room } = require('./room.model.js');
 const { User } = require('../users/user.model.js');
+const { Question } = require('../questions/question.model.js');
+const matchService = require('../matches/match.service.js');
 
 /**
  * Get all active rooms
@@ -516,11 +518,15 @@ const startMatch = async (req, res) => {
     
     // Broadcast to all players via socket (if socket service available)
     if (req.io) {
-      req.io.to(`room-${id}`).emit('match-started', {
-        roomId: id,
-        startedAt: room.startedAt,
-        players: room.players
+      req.io.to(`room:${id}`).emit('MATCH_STARTED', {
+        type: 'MATCH_STARTED',
+        data: {
+          roomId: id,
+          startedAt: room.startedAt,
+          players: room.players
+        }
       });
+      req.io.to('lobby').emit('ROOM_UPDATED', { room });
     }
     
     res.json({
@@ -642,6 +648,133 @@ const endMatch = async (req, res) => {
 };
 
 /**
+ * Start a full game match with question
+ * POST /api/v1/lobby/rooms/:id/start-match
+ */
+const startGameMatch = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const room = await Room.findById(id);
+
+    if (!room) {
+      return res.status(404).json({
+        success: false,
+        message: 'Room not found'
+      });
+    }
+
+    // Only host can start match
+    if (room.createdBy.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only room host can start the match'
+      });
+    }
+
+    // Check room status
+    if (room.status !== 'waiting') {
+      return res.status(400).json({
+        success: false,
+        message: `Match cannot be started from ${room.status} status`
+      });
+    }
+
+    // Need at least 2 players
+    if (room.players.length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'Need at least 2 players to start'
+      });
+    }
+
+    // Randomly select a question matching room settings
+    const questions = await Question.find({
+      mode: 'debug',
+      difficulty: room.difficulty,
+      isActive: true
+    });
+
+    if (questions.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No questions available for this difficulty level'
+      });
+    }
+
+    const question = questions[Math.floor(Math.random() * questions.length)];
+
+    // Calculate timer duration from room settings (convert minutes to seconds)
+    const timerDuration = room.timer * 60;
+
+    // Update room status to playing
+    await room.startMatch();
+
+    // Create and start match via service
+    const match = await matchService.createMatch({
+      roomId: id,
+      questionId: question._id,
+      timerDuration
+    });
+
+    await matchService.startMatch(match._id);
+
+    // Broadcast match start via socket (if io available)
+    if (req.io) {
+      const timerEndTime = new Date(Date.now() + timerDuration * 1000).toISOString();
+      
+      req.io.to(`room-${id}`).emit('game:match_start', {
+        matchId: match._id,
+        question: {
+          id: question.id,
+          title: question.title,
+          description: question.description,
+          starterCode: question.starterCode,
+          testcases: question.testcases.map(tc => ({
+            input: tc.input,
+            output: tc.output
+          }))
+        },
+        timerDuration,
+        timerEndTime
+      });
+
+      // Also broadcast to lobby
+      req.io.to('lobby').emit('ROOM_UPDATED', { room });
+    }
+
+    res.json({
+      success: true,
+      message: 'Match started successfully',
+      data: {
+        matchId: match._id,
+        question: {
+          id: question.id,
+          title: question.title,
+          description: question.description,
+          starterCode: question.starterCode
+        },
+        timerDuration
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to start match',
+      error: error.message
+    });
+  }
+};
+
+/**
  * Get match results
  * GET /api/v1/lobby/rooms/:id/results
  */
@@ -712,6 +845,7 @@ module.exports = {
   leaveRoom,
   getLobbyStats,
   startMatch,
+  startGameMatch,
   endMatch,
   getMatchResults
 };
