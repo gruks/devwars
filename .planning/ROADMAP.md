@@ -73,27 +73,27 @@
 
 ---
 
-### Phase 3: Game Engine (Debug Battle) ✓ Planned
+### Phase 3: Game Engine (Debug Battle) ✓ Complete
 
 **Goal**: Build the core game mechanics and battle system
 
-**Duration**: ~5 plans
+**Duration**: 5 plans (complete)
 
 **Delivers**:
-- Debug battle engine
-- Buggy code repository
-- Test case system
-- Timer synchronization
-- Match state management
-- Socket events (MATCH_START, CODE_UPDATE, CODE_SUBMIT, PLAYER_SOLVED, MATCH_END)
-- Frontend room integration (dynamic data, rejoin, battle flow)
+- Debug battle engine ✓
+- Buggy code repository ✓
+- Test case system ✓
+- Timer synchronization ✓
+- Match state management ✓
+- Socket events (MATCH_START, CODE_UPDATE, CODE_SUBMIT, PLAYER_SOLVED, MATCH_END) ✓
+- Frontend room integration (dynamic data, rejoin, battle flow) ✓
 
 **Plans**:
 - [x] 03-01-PLAN.md — Question Model and API
 - [x] 03-02-PLAN.md — Execution Service and Evaluation
 - [x] 03-03-PLAN.md — Match State Management
 - [x] 03-04-PLAN.md — Real-time Game Socket Events
-- [ ] 03-05-PLAN.md — Frontend Room Integration (dynamic Room.tsx, rejoin, battle flow)
+- [x] 03-05-PLAN.md — Frontend Room Integration (dynamic Room.tsx, rejoin, battle flow)
 
 ---
 
@@ -136,11 +136,11 @@
 
 ---
 
-### Phase lobby-fix: Lobby Fix & Session Persistence (In Progress)
+### Phase lobby-fix: Lobby Fix & Session Persistence ✓ Complete
 
 **Goal**: Fix lobby functionality, implement persistent sessions, and ensure database integration works properly
 
-**Duration**: ~4 plans
+**Duration**: 5 plans (complete)
 
 **Delivers**:
 - Persistent sessions (no repeated login) ✓
