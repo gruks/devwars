@@ -77,7 +77,7 @@
 
 **Goal**: Build the core game mechanics and battle system
 
-**Duration**: ~4 plans
+**Duration**: ~5 plans
 
 **Delivers**:
 - Debug battle engine
@@ -86,8 +86,14 @@
 - Timer synchronization
 - Match state management
 - Socket events (MATCH_START, CODE_UPDATE, CODE_SUBMIT, PLAYER_SOLVED, MATCH_END)
+- Frontend room integration (dynamic data, rejoin, battle flow)
 
-**Plans**: 4 plans
+**Plans**:
+- [x] 03-01-PLAN.md — Question Model and API
+- [x] 03-02-PLAN.md — Execution Service and Evaluation
+- [x] 03-03-PLAN.md — Match State Management
+- [x] 03-04-PLAN.md — Real-time Game Socket Events
+- [ ] 03-05-PLAN.md — Frontend Room Integration (dynamic Room.tsx, rejoin, battle flow)
 
 ---
 
@@ -149,7 +155,7 @@
 - [x] lobby-fix-02 — Fix create room flow
 - [x] lobby-fix-03 — Database integration for room values
 - [x] lobby-fix-04 — Fix lobby functionality
-- [ ] lobby-fix-05 — Gap closure: Fix cookie-based auth in middleware
+- [x] lobby-fix-05 — Gap closure: Fix cookie-based auth in middleware
 
 ---
 
