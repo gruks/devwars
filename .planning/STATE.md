@@ -2,8 +2,9 @@
 
 ## Current Phase
 
-**Phase**: lobby-fix
-**Status**: Complete - 5 of 5 plans complete
+**Phase**: 03-game-engine
+**Status**: In Progress - 1 of ? plans complete
+**Current Plan**: 03-01 Question Model and API ✓ Complete
 
 ## Phase Plans
 
@@ -76,19 +77,29 @@
 - [x] Host transfer on leave
 - [x] Empty room auto-deletion
 - [x] Cookie fallback in auth middleware (session persists after browser close)
+- [x] Question MongoDB model with debug battle schema
+- [x] Question CRUD API endpoints with filtering and pagination
+- [x] Question seeding with 5 sample debug questions
 
 ## What's Next
 
-### Phase 1: Foundation
+### Phase 3: Game Engine
 
-**Status**: ✓ All plans complete
+**Status**: In Progress
 
 **Completed Plans**:
-1. ~~01-01 — Project setup and configuration~~ ✓ Complete
-2. ~~01-02 — Database and Redis connections~~ ✓ Complete
-3. ~~01-03 — Authentication system~~ ✓ Complete
+1. ~~03-01 — Question Model and API~~ ✓ Complete
 
-**Next Phase**: Ready to begin Phase 2 (Core Features)
+**Next Plan**: 03-02 - Game Engine Core
+
+**Description**: Build the core game engine for debug battle mode:
+- Match state management
+- Code execution service integration
+- Submission validation and scoring
+- Real-time game state updates via Socket.io
+- Match lifecycle management
+
+**Dependencies**: Question model (✓ Complete)
 
 ## Progress
 
@@ -132,6 +143,14 @@ Overall                [░░░░░░░░░░]   0% (1/4+ plans)
 | Frontend framework | React, Vue, Svelte | Phase 2 |
 
 ## Recent Decisions
+
+### 03-01 (Question Model and API)
+
+25. **Question ID format** (2026-02-15) - Used q-xxxxx format for human-readable identifiers via uuid-based generation in pre-validate hook
+26. **Hidden solutions in list view** (2026-02-15) - Solutions and hints excluded from GET /questions to prevent cheating; full question available at GET /questions/:id
+27. **Idempotent seeding pattern** (2026-02-15) - Seed operation clears existing debug questions before inserting samples for clean reset
+28. **Multi-language question support** (2026-02-15) - Schema supports python, javascript, java, go, cpp, csharp, ruby, rust for future expansion
+29. **Admin-only question management** (2026-02-15) - Create and seed endpoints require admin role via authorize('admin') middleware
 
 ### lobby-fix-04 (Lobby Functionality)
 
@@ -192,7 +211,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed lobby-fix-04-PLAN.md (Lobby Functionality)
-- **Commits**: 5 atomic commits + 1 submodule reference commit
-- **Duration**: 15 minutes
-- **Completed**: 2026-02-14
+- **Stopped At**: Completed 03-01-PLAN.md (Question Model and API)
+- **Commits**: 3 atomic commits (feat)
+- **Duration**: 1m 56s
+- **Completed**: 2026-02-15
