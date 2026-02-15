@@ -73,25 +73,21 @@
 
 ---
 
-### Phase 3: Game Engine (Debug Battle)
+### Phase 3: Game Engine (Debug Battle) ✓ Planned
 
 **Goal**: Build the core game mechanics and battle system
 
 **Duration**: ~4 plans
 
 **Delivers**:
-- Debug battle engine ✓
-- Buggy code repository ✓
-- Test case system ✓
-- Timer synchronization ✓
-- Match state management ✓
-- Socket events (MATCH_START, CODE_UPDATE, CODE_SUBMIT, PLAYER_SOLVED, MATCH_END) ✓
+- Debug battle engine
+- Buggy code repository
+- Test case system
+- Timer synchronization
+- Match state management
+- Socket events (MATCH_START, CODE_UPDATE, CODE_SUBMIT, PLAYER_SOLVED, MATCH_END)
 
-**Plans**:
-- [x] 03-01-PLAN.md — Question model + seeding API
-- [x] 03-02-PLAN.md — Execution service + testcase evaluation
-- [x] 03-03-PLAN.md — Match state management
-- [x] 03-04-PLAN.md — Game socket events + room integration
+**Plans**: 4 plans
 
 ---
 
