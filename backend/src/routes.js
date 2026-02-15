@@ -75,6 +75,15 @@ router.use('/users', require('./modules/users/user.routes.js'));
 router.use('/lobby', require('./modules/rooms/room.routes.js'));
 
 /**
+ * Question routes
+ * GET /api/v1/questions - Get all questions
+ * GET /api/v1/questions/:id - Get question by ID
+ * POST /api/v1/questions - Create question (admin)
+ * POST /api/v1/questions/seed - Seed questions (admin)
+ */
+router.use('/questions', require('./modules/questions/question.routes.js'));
+
+/**
  * Future module routes:
  * 
  * router.use('/users', require('./modules/users/user.routes'));
