@@ -3,8 +3,8 @@
 ## Current Phase
 
 **Phase**: 03-game-engine
-**Status**: In Progress - 3 of ? plans complete
-**Current Plan**: 03-03 Match State Management ✓ Complete
+**Status**: In Progress - 4 of ? plans complete
+**Current Plan**: 03-04 Real-time Game Socket Events ✓ Complete
 
 ## Phase Plans
 
@@ -89,6 +89,10 @@
 - [x] Match API endpoints with host-only authorization
 - [x] First blood detection and winner calculation
 - [x] User stats updates on match completion
+- [x] Game socket handlers with 6 real-time events (MATCH_START, CODE_UPDATE, PLAYER_SOLVED, MATCH_END, TIMER_SYNC)
+- [x] Timer synchronization with 5-second intervals and auto-end on expiry
+- [x] Room controller start-match endpoint with random question selection
+- [x] Socket namespace integration (room:{roomId} format)
 
 ## What's Next
 
@@ -100,24 +104,27 @@
 1. ~~03-01 — Question Model and API~~ ✓ Complete
 2. ~~03-02 — Execution Service and Evaluation~~ ✓ Complete
 3. ~~03-03 — Match State Management~~ ✓ Complete
+4. ~~03-04 — Real-time Game Socket Events~~ ✓ Complete
 
-**Next Plan**: 03-04 - Real-time Game Updates
+**Next Plan**: TBD - Frontend Game View or Phase Complete
 
-**Description**: Add Socket.io for real-time game state synchronization:
-- Socket.io integration with authentication
-- Real-time match state broadcasting
-- Player presence and activity tracking
-- Code submission real-time updates
-- Leaderboard updates during matches
+**Description**: Game engine backend is complete with:
+- Question management and seeding
+- Code execution and evaluation
+- Match state management
+- Real-time socket events
 
-**Dependencies**: Match model (✓), Room model (✓), Auth system (✓)
+**Remaining**: Frontend game view, code editor integration, leaderboard UI
+
+**Dependencies**: All backend components complete (✓)
 
 ## Progress
 
 ```
 Phase 1: Foundation    [██████████] 100% (3/3 plans)
-Phase lobby-fix        [██████████] 100% (4/4 plans)
-Overall                [░░░░░░░░░░]   0% (1/4+ plans)
+Phase lobby-fix        [██████████] 100% (5/5 plans)
+Phase 3: Game Engine   [████████░░]  80% (4/5 plans)
+Overall                [████░░░░░░]  40% (12/30 plans)
 ```
 
 ## Decisions
@@ -155,6 +162,14 @@ Overall                [░░░░░░░░░░]   0% (1/4+ plans)
 | Frontend framework | React, Vue, Svelte | Phase 2 |
 
 ## Recent Decisions
+
+### 03-04 (Real-time Game Socket Events)
+
+39. **Socket event format** (2026-02-15) - Consistent `{ type, data }` structure for all socket events enables uniform frontend handling
+40. **Timer sync frequency** (2026-02-15) - 5-second intervals balance real-time feel with network efficiency
+41. **Auto-end on timer expiry** (2026-02-15) - Match automatically ends when timer reaches 0 without host action required
+42. **Question selection** (2026-02-15) - Randomly select from available questions matching room difficulty
+43. **Room namespace format** (2026-02-15) - Using `room:{roomId}` enables targeted broadcasts to specific rooms
 
 ### 03-03 (Match State Management)
 
@@ -238,7 +253,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed 03-03-PLAN.md (Match State Management)
-- **Commits**: 3 atomic commits (feat)
-- **Duration**: 3m
+- **Stopped At**: Completed 03-04-PLAN.md (Real-time Game Socket Events)
+- **Commits**: 2 atomic commits (feat)
+- **Duration**: 2m
 - **Completed**: 2026-02-15
