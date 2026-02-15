@@ -3,8 +3,8 @@
 ## Current Phase
 
 **Phase**: 03-game-engine
-**Status**: In Progress - 4 of ? plans complete
-**Current Plan**: 03-04 Real-time Game Socket Events ✓ Complete
+**Status**: In Progress - 5 of 5 plans complete
+**Current Plan**: 03-05 Room Page Dynamic Integration ✓ Complete
 
 ## Phase Plans
 
@@ -105,26 +105,26 @@
 2. ~~03-02 — Execution Service and Evaluation~~ ✓ Complete
 3. ~~03-03 — Match State Management~~ ✓ Complete
 4. ~~03-04 — Real-time Game Socket Events~~ ✓ Complete
+5. ~~03-05 — Frontend Room Integration~~ ✓ Complete
 
-**Next Plan**: TBD - Frontend Game View or Phase Complete
+**Next Plan**: Phase Complete - Ready for next phase
 
-**Description**: Game engine backend is complete with:
+**Description**: Game engine is now complete with:
 - Question management and seeding
 - Code execution and evaluation
 - Match state management
 - Real-time socket events
+- Frontend room page with full API integration
 
-**Remaining**: Frontend game view, code editor integration, leaderboard UI
-
-**Dependencies**: All backend components complete (✓)
+**Dependencies**: All components complete (✓)
 
 ## Progress
 
 ```
 Phase 1: Foundation    [██████████] 100% (3/3 plans)
 Phase lobby-fix        [██████████] 100% (5/5 plans)
-Phase 3: Game Engine   [████████░░]  80% (4/5 plans)
-Overall                [████░░░░░░]  40% (12/30 plans)
+Phase 3: Game Engine   [██████████] 100% (5/5 plans)
+Overall                [██████░░░░]  43% (13/30 plans)
 ```
 
 ## Decisions
@@ -162,6 +162,12 @@ Overall                [████░░░░░░]  40% (12/30 plans)
 | Frontend framework | React, Vue, Svelte | Phase 2 |
 
 ## Recent Decisions
+
+### 03-05 (Frontend Room Integration)
+
+44. **Rejoin pattern** (2026-02-15) - Players who leave are kept in room.players array with departedAt timestamp, enabling rejoin if room is still waiting
+45. **Active player counting** (2026-02-15) - playerCount and isFull virtuals now filter out departed players for accurate room capacity
+46. **Match results endpoint** (2026-02-15) - Fetch from /lobby/rooms/:id/results which returns winner and player scores
 
 ### 03-04 (Real-time Game Socket Events)
 
@@ -253,7 +259,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed 03-04-PLAN.md (Real-time Game Socket Events)
-- **Commits**: 2 atomic commits (feat)
-- **Duration**: 2m
+- **Stopped At**: Completed 03-05-PLAN.md (Frontend Room Integration)
+- **Commits**: 5 atomic commits (3 frontend, 2 backend)
+- **Duration**: 12m
 - **Completed**: 2026-02-15
