@@ -90,6 +90,17 @@ router.use('/questions', require('./modules/questions/question.routes.js'));
 router.use('/evaluation', require('./modules/evaluation/evaluation.routes.js'));
 
 /**
+ * Match routes
+ * POST /api/v1/matches - Create match (protected, host)
+ * GET /api/v1/matches/:id - Get match (protected)
+ * POST /api/v1/matches/:id/start - Start match (protected, host)
+ * POST /api/v1/matches/:id/submit - Submit code (protected)
+ * POST /api/v1/matches/:id/end - End match (protected, host)
+ * GET /api/v1/matches/:id/results - Get results (protected)
+ */
+router.use('/matches', require('./modules/matches/match.routes.js'));
+
+/**
  * Future module routes:
  * 
  * router.use('/users', require('./modules/users/user.routes'));
