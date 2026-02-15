@@ -3,8 +3,8 @@
 ## Current Phase
 
 **Phase**: 03-game-engine
-**Status**: In Progress - 1 of ? plans complete
-**Current Plan**: 03-01 Question Model and API ✓ Complete
+**Status**: In Progress - 2 of ? plans complete
+**Current Plan**: 03-02 Execution Service and Evaluation ✓ Complete
 
 ## Phase Plans
 
@@ -80,6 +80,10 @@
 - [x] Question MongoDB model with debug battle schema
 - [x] Question CRUD API endpoints with filtering and pagination
 - [x] Question seeding with 5 sample debug questions
+- [x] Execution service wrapper for sandbox-service API
+- [x] Testcase evaluation engine with output comparison
+- [x] Code submission evaluation endpoint with score calculation
+- [x] Detailed pass/fail results with runtime and memory metrics
 
 ## What's Next
 
@@ -89,17 +93,18 @@
 
 **Completed Plans**:
 1. ~~03-01 — Question Model and API~~ ✓ Complete
+2. ~~03-02 — Execution Service and Evaluation~~ ✓ Complete
 
-**Next Plan**: 03-02 - Game Engine Core
+**Next Plan**: 03-03 - Match State Management
 
-**Description**: Build the core game engine for debug battle mode:
-- Match state management
-- Code execution service integration
-- Submission validation and scoring
+**Description**: Build match state management for debug battle mode:
+- Match state machine (waiting, in-progress, finished)
+- Player submission tracking
 - Real-time game state updates via Socket.io
-- Match lifecycle management
+- Match lifecycle management (start, end, cleanup)
+- Leaderboard and scoring within matches
 
-**Dependencies**: Question model (✓ Complete)
+**Dependencies**: Question model (✓), Execution service (✓)
 
 ## Progress
 
@@ -143,6 +148,14 @@ Overall                [░░░░░░░░░░]   0% (1/4+ plans)
 | Frontend framework | React, Vue, Svelte | Phase 2 |
 
 ## Recent Decisions
+
+### 03-02 (Execution Service and Evaluation)
+
+30. **Language mapping** (2026-02-15) - Mapped internal language names to sandbox format: python->python, node/javascript->javascript, java->java, go->go, cpp->cpp
+31. **Output comparison strategy** (2026-02-15) - Trim whitespace and use exact match to avoid false failures from trailing newlines
+32. **Score calculation** (2026-02-15) - Percentage-based scoring: (passed / total) * 100, rounded to nearest integer
+33. **Execution timeout** (2026-02-15) - 3000ms default for direct calls, 5000ms for testcase evaluation to account for overhead
+34. **Error handling pattern** (2026-02-15) - Return structured error object { success: false, output, error, runtime, memory } instead of throwing for graceful degradation
 
 ### 03-01 (Question Model and API)
 
@@ -211,7 +224,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed 03-01-PLAN.md (Question Model and API)
+- **Stopped At**: Completed 03-02-PLAN.md (Execution Service and Evaluation)
 - **Commits**: 3 atomic commits (feat)
-- **Duration**: 1m 56s
+- **Duration**: 3m
 - **Completed**: 2026-02-15
