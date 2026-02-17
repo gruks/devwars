@@ -13,32 +13,95 @@ const router = express.Router();
 
 /**
  * @route   GET /api/v1/users/leaderboard
- * @desc    Get leaderboard rankings
+ * @desc    Get leaderboard rankings with optional filters
  * @access  Public
  */
 router.get('/leaderboard', async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 50;
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
+    const { period, tier } = req.query;
     
-    const users = await User.find({ role: { $ne: 'admin' } })
-      .select('username stats.rating stats.wins stats.losses stats.matchesPlayed')
+    // Build base query (exclude admins)
+    const query = { role: { $ne: 'admin' } };
+    
+    // Apply period filter based on last activity (updatedAt)
+    if (period && period !== 'all') {
+      const now = new Date();
+      let cutoffDate;
+      
+      switch (period) {
+        case 'daily':
+          cutoffDate = new Date(now.setDate(now.getDate() - 1));
+          break;
+        case 'weekly':
+          cutoffDate = new Date(now.setDate(now.getDate() - 7));
+          break;
+        case 'monthly':
+          cutoffDate = new Date(now.setMonth(now.getMonth() - 1));
+          break;
+        default:
+          cutoffDate = null;
+      }
+      
+      if (cutoffDate) {
+        query.updatedAt = { $gte: cutoffDate };
+      }
+    }
+    
+    // Apply tier filter based on rating ranges
+    if (tier) {
+      switch (tier.toLowerCase()) {
+        case 'bronze':
+          query['stats.rating'] = { $lt: 1100 };
+          break;
+        case 'silver':
+          query['stats.rating'] = { $gte: 1100, $lt: 1300 };
+          break;
+        case 'gold':
+          query['stats.rating'] = { $gte: 1300, $lt: 1600 };
+          break;
+        case 'platinum':
+          query['stats.rating'] = { $gte: 1600 };
+          break;
+      }
+    }
+    
+    const users = await User.find(query)
+      .select('username stats.rating stats.wins stats.losses stats.matchesPlayed updatedAt')
       .sort({ 'stats.rating': -1 })
       .limit(limit);
     
-    const leaderboard = users.map((user, index) => ({
-      rank: index + 1,
-      username: user.username,
-      rating: user.stats?.rating || 1000,
-      wins: user.stats?.wins || 0,
-      losses: user.stats?.losses || 0,
-      matchesPlayed: user.stats?.matchesPlayed || 0,
-    }));
+    const leaderboard = users.map((user, index) => {
+      const wins = user.stats?.wins || 0;
+      const losses = user.stats?.losses || 0;
+      const matchesPlayed = user.stats?.matchesPlayed || 0;
+      
+      // Calculate win rate
+      const winRate = matchesPlayed > 0 
+        ? ((wins / matchesPlayed) * 100).toFixed(1) + '%'
+        : '0.0%';
+      
+      return {
+        rank: index + 1,
+        username: user.username,
+        rating: user.stats?.rating || 1000,
+        wins,
+        losses,
+        winRate,
+        matchesPlayed
+      };
+    });
     
     res.json({
       success: true,
-      data: leaderboard
+      data: leaderboard,
+      meta: {
+        filters: { period: period || 'all', tier: tier || 'all' },
+        count: leaderboard.length
+      }
     });
   } catch (error) {
+    console.error('Error fetching leaderboard:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch leaderboard',
