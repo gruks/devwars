@@ -6,7 +6,8 @@
 // Load config and logger first (before app to avoid circular deps)
 const { env } = require('./config/env.js');
 const { logger } = require('./utils/logger.js');
-const { connectDB } = require('./config/db.js');
+const { connectDB, disconnectDB } = require('./config/db.js');
+const { connectRedis, disconnectRedis } = require('./config/redis.js');
 const { app, sessionMiddleware } = require('./app.js');
 const PORT = env.PORT;
 
@@ -15,7 +16,11 @@ const startServer = async () => {
   try {
     // Connect to MongoDB first
     await connectDB();
-    logger.info('Database connection established');
+    logger.info('MongoDB connection established');
+
+    // Connect to Redis
+    await connectRedis();
+    logger.info('Redis connection established');
 
     // Create HTTP server
     const httpServer = app.listen(PORT, () => {
@@ -48,15 +53,28 @@ const startServer = async () => {
 const server = startServer();
 
 // Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
+process.on('unhandledRejection', async (err) => {
   logger.error('Unhandled Rejection:', err.message);
   logger.error(err.stack);
 
-  // Graceful shutdown
-  server.then(s => s.close(() => {
-    logger.info('Server closed due to unhandled rejection');
+  // Graceful shutdown with database disconnection
+  try {
+    const s = await server;
+    s.close(async () => {
+      logger.info('HTTP server closed due to unhandled rejection');
+
+      // Disconnect from databases
+      await disconnectDB();
+      logger.info('MongoDB connection closed');
+      await disconnectRedis();
+      logger.info('Redis connection closed');
+
+      process.exit(1);
+    });
+  } catch (error) {
+    logger.error('Error during shutdown:', error);
     process.exit(1);
-  })).catch(() => process.exit(1));
+  }
 });
 
 // Handle uncaught exceptions
@@ -69,23 +87,49 @@ process.on('uncaughtException', (err) => {
 });
 
 // Handle SIGTERM (e.g., from Docker, Kubernetes)
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   logger.info('SIGTERM received. Shutting down gracefully...');
 
-  server.then(s => s.close(() => {
-    logger.info('Server closed');
-    process.exit(0);
-  })).catch(() => process.exit(0));
+  try {
+    const s = await server;
+    s.close(async () => {
+      logger.info('HTTP server closed');
+
+      // Disconnect from databases
+      await disconnectDB();
+      logger.info('MongoDB connection closed');
+      await disconnectRedis();
+      logger.info('Redis connection closed');
+
+      process.exit(0);
+    });
+  } catch (error) {
+    logger.error('Error during graceful shutdown:', error);
+    process.exit(1);
+  }
 });
 
 // Handle SIGINT (Ctrl+C)
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   logger.info('SIGINT received. Shutting down gracefully...');
 
-  server.then(s => s.close(() => {
-    logger.info('Server closed');
-    process.exit(0);
-  })).catch(() => process.exit(0));
+  try {
+    const s = await server;
+    s.close(async () => {
+      logger.info('HTTP server closed');
+
+      // Disconnect from databases
+      await disconnectDB();
+      logger.info('MongoDB connection closed');
+      await disconnectRedis();
+      logger.info('Redis connection closed');
+
+      process.exit(0);
+    });
+  } catch (error) {
+    logger.error('Error during graceful shutdown:', error);
+    process.exit(1);
+  }
 });
 
 module.exports = { server };
