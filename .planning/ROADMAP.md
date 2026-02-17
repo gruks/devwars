@@ -133,8 +133,8 @@
 - Scoring service
 
 **Plans**:
-- [x] 05-01-PLAN.md — Profile and user stats
-- [x] 05-02-PLAN.md — Leaderboard and dashboard
+- [ ] 05-01-PLAN.md — Profile and user stats
+- [ ] 05-02-PLAN.md — Leaderboard and dashboard
 
 ---
 
