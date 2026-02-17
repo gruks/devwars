@@ -101,6 +101,12 @@ router.use('/evaluation', require('./modules/evaluation/evaluation.routes.js'));
 router.use('/matches', require('./modules/matches/match.routes.js'));
 
 /**
+ * Stats routes
+ * GET /api/v1/stats/dashboard - Get global platform statistics
+ */
+router.use('/stats', require('./modules/stats/stats.routes.js'));
+
+/**
  * Future module routes:
  * 
  * router.use('/users', require('./modules/users/user.routes'));
