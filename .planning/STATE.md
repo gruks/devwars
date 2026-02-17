@@ -2,9 +2,9 @@
 
 ## Current Phase
 
-**Phase**: 04-code-execution
-**Status**: Complete - 2 of 2 plans complete
-**Current Plan**: 04-02 Backend Integration ✓ Complete
+**Phase**: 05-stats-ranking
+**Status**: In Progress - 1 of 2 plans complete
+**Current Plan**: 05-01 Profile API ✓ Complete
 
 ## Phase Plans
 
@@ -93,34 +93,38 @@
 - [x] Timer synchronization with 5-second intervals and auto-end on expiry
 - [x] Room controller start-match endpoint with random question selection
 - [x] Socket namespace integration (room:{roomId} format)
+- [x] Profile API with match history endpoint (GET /users/:username/history)
+- [x] User stats endpoint with computed winRate and tier (GET /users/:username/stats)
+- [x] Enhanced profile endpoint with comprehensive stats data
 
 ## What's Next
 
-### Phase 4: Code Execution
+### Phase 5: Stats and Ranking
 
-**Status**: Complete
+**Status**: In Progress
 
 **Completed Plans**:
-1. ~~04-01 — Code Execution Queue~~ ✓ Complete
-2. ~~04-02 — Backend Integration~~ ✓ Complete
+1. ~~05-01 — Profile API~~ ✓ Complete
 
-**Next Plan**: Phase Complete - Ready for next phase
+**Remaining Plans**:
+2. 05-02 — Leaderboard Enhancements
 
-**Description**: Backend integration complete with:
-- Async job processing with polling
-- Docker Compose for service orchestration  
-- Multi-language support verified (JS, Python, Java, Go, C++)
+**Description**: Profile API complete with:
+- Match history endpoint with pagination and question details
+- User stats endpoint with computed winRate and tier rankings
+- Enhanced profile endpoint returning comprehensive user data
 
-**Dependencies**: Ready for match evaluation integration
+**Dependencies**: Ready for leaderboard enhancements and ranking features
 
 ## Progress
 
 ```
-Phase 1: Foundation      [██████████] 100% (3/3 plans)
-Phase lobby-fix          [██████████] 100% (5/5 plans)
-Phase 3: Game Engine    [██████████] 100% (5/5 plans)
-Phase 4: Code Execution [██████████] 100% (2/2 plans)
-Overall                 [████████░░]  57% (16/28 plans)
+Phase 1: Foundation       [██████████] 100% (3/3 plans)
+Phase lobby-fix           [██████████] 100% (5/5 plans)
+Phase 3: Game Engine      [██████████] 100% (5/5 plans)
+Phase 4: Code Execution   [██████████] 100% (2/2 plans)
+Phase 5: Stats & Ranking  [█████░░░░░]  50% (1/2 plans)
+Overall                   [█████████░]  61% (17/28 plans)
 ```
 
 ## Decisions
@@ -158,6 +162,14 @@ Overall                 [████████░░]  57% (16/28 plans)
 | Frontend framework | React, Vue, Svelte | Phase 2 |
 
 ## Recent Decisions
+
+### 05-01 (Profile API)
+
+52. **Tier thresholds** (2026-02-17) - Bronze <1100, Silver 1100-1299, Gold 1300-1599, Platinum 1600+. Aligns with existing skill level brackets used in lobby
+53. **winRate calculation** (2026-02-17) - Calculated as (wins / matchesPlayed) * 100, formatted to 1 decimal place. Returns "0.0%" when no matches played
+54. **Match history defaults** (2026-02-17) - Default to 'finished' matches only. Supports ?status=all to include waiting/active matches
+55. **Pagination limits** (2026-02-17) - Default 20 items per page, max 100, using standard page/limit query params
+56. **Duration calculation** (2026-02-17) - Uses match endTime if available, otherwise uses submission solvedAt. Falls back to 0
 
 ### 03-05 (Frontend Room Integration)
 
@@ -266,7 +278,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed 04-02-PLAN.md (Backend Integration)
-- **Commits**: 3 commits (sandbox integration, docker-compose, language tests)
-- **Duration**: 13m
+- **Stopped At**: Completed 05-01-PLAN.md (Profile API)
+- **Commits**: 3 commits (match history endpoint, user stats endpoint, enhanced profile)
+- **Duration**: 8m
 - **Completed**: 2026-02-17
