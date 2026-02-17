@@ -52,6 +52,20 @@ router.post('/rooms/:id/leave', authenticate, roomController.leaveRoom);
 router.post('/rooms/:id/start-match', authenticate, roomController.startGameMatch);
 
 /**
+ * @route   POST /api/v1/lobby/rooms/:id/end
+ * @desc    End a match
+ * @access  Private (Host only)
+ */
+router.post('/rooms/:id/end', authenticate, roomController.endMatch);
+
+/**
+ * @route   GET /api/v1/lobby/rooms/:id/results
+ * @desc    Get match results
+ * @access  Public
+ */
+router.get('/rooms/:id/results', roomController.getMatchResults);
+
+/**
  * @route   GET /api/v1/lobby/stats
  * @desc    Get lobby statistics
  * @access  Public
