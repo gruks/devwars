@@ -202,4 +202,79 @@ router.get('/:username/history', async (req, res) => {
   }
 });
 
+/**
+ * @route   GET /api/v1/users/:username/stats
+ * @desc    Get detailed user stats
+ * @access  Public
+ */
+router.get('/:username/stats', async (req, res) => {
+  try {
+    // Find user by username (exclude password/refreshTokens)
+    const user = await User.findOne({ username: req.params.username })
+      .select('-password -refreshTokens');
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Get base stats from user model
+    const wins = user.stats?.wins || 0;
+    const losses = user.stats?.losses || 0;
+    const matchesPlayed = user.stats?.matchesPlayed || 0;
+    const rating = user.stats?.rating || 1000;
+
+    // Calculate win rate as percentage
+    let winRate = '0.0%';
+    if (matchesPlayed > 0) {
+      winRate = ((wins / matchesPlayed) * 100).toFixed(1) + '%';
+    }
+
+    // Determine tier based on rating
+    let tier = 'bronze';
+    if (rating >= 1600) {
+      tier = 'platinum';
+    } else if (rating >= 1300) {
+      tier = 'gold';
+    } else if (rating >= 1100) {
+      tier = 'silver';
+    }
+
+    // Get match count (total finished matches)
+    const matchCount = await Match.countDocuments({
+      'players.playerId': user._id,
+      status: 'finished'
+    });
+
+    res.json({
+      success: true,
+      data: {
+        username: user.username,
+        avatar: user.avatar,
+        role: user.role,
+        stats: {
+          wins,
+          losses,
+          matchesPlayed,
+          rating,
+          winRate,
+          tier,
+          matchCount
+        },
+        memberSince: user.createdAt,
+        lastActiveAt: user.updatedAt
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching user stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user stats',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
