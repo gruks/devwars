@@ -2,9 +2,9 @@
 
 ## Current Phase
 
-**Phase**: 05-stats-ranking
-**Status**: Complete - 2 of 2 plans complete
-**Current Plan**: 05-02 Leaderboard Enhancements ✓ Complete
+**Phase**: 02-realtime
+**Status**: In Progress - 1 of 3 plans complete
+**Current Plan**: 02-01 Socket.io Foundation ✓ Complete
 
 ## Phase Plans
 
@@ -99,6 +99,27 @@
 - [x] Leaderboard filters (period: daily/weekly/monthly/all, tier: bronze/silver/gold/platinum)
 - [x] Dashboard stats API with platform analytics (GET /stats/dashboard)
 - [x] Real-time leaderboard updates via socket (LEADERBOARD_UPDATE event)
+- [x] Socket.io Redis adapter for multi-server scaling
+- [x] Cookie-based JWT socket authentication middleware
+- [x] Domain:action event naming convention (lobby:join, room:create, match:start)
+- [x] Modular socket structure with dedicated middleware and utilities
+- [x] Production socket config (pingTimeout: 60000, connectionStateRecovery)
+
+### Phase 02-realtime: Real-time Socket Infrastructure
+
+**Status**: In Progress - 1 of 3 plans complete
+
+**Completed Plans**:
+1. ~~02-01 — Socket.io Foundation~~ ✓ Complete
+2. 02-02 — Lobby Socket Handlers (pending)
+3. 02-03 — Room Socket Handlers (pending)
+
+**Description**: Production-ready Socket.io infrastructure with:
+- Redis adapter for horizontal scaling
+- Cookie-based JWT authentication middleware
+- Domain:action event naming convention (lobby:join, room:create)
+- Modular socket structure with dedicated middleware
+- Production configuration (ping timeouts, state recovery)
 
 ## What's Next
 
@@ -124,11 +145,12 @@
 
 ```
 Phase 1: Foundation       [██████████] 100% (3/3 plans)
+Phase 02-realtime         [███░░░░░░░]  33% (1/3 plans) - In Progress
 Phase lobby-fix           [██████████] 100% (5/5 plans)
 Phase 3: Game Engine      [██████████] 100% (5/5 plans)
 Phase 4: Code Execution   [██████████] 100% (2/2 plans)
 Phase 5: Stats & Ranking  [██████████] 100% (2/2 plans)
-Overall                   [██████████]  64% (18/28 plans)
+Overall                   [██████████]  68% (19/28 plans)
 ```
 
 ## Decisions
@@ -147,6 +169,16 @@ Overall                   [██████████]  64% (18/28 plans)
 | Auth | JWT | Stateless, scalable |
 | Execution | Docker | Security isolation |
 - [Phase 03-game-engine]: Match status flow: waiting -> active -> finished with host-only transitions — Prevents invalid state changes and ensures fair game control
+- [Phase 01-foundation]: Server waits for both MongoDB and Redis before starting HTTP listener — Prevents race conditions and ensures data layer is ready before accepting requests
+- [Phase 01-foundation]: Graceful shutdown closes HTTP server first, then database connections — Prevents new requests during shutdown while allowing in-flight requests to complete
+
+### 02-01 (Socket.io Foundation)
+
+61. **Redis adapter for Socket.io** (2026-02-17) - Enables multi-server horizontal scaling using Redis pub/sub
+62. **Cookie-based JWT over session-based** (2026-02-17) - Better for stateless horizontal scaling; reads accessToken from httpOnly cookies
+63. **Domain:action event naming** (2026-02-17) - Clear organization: lobby:join, room:create, match:start - lowercase with colon separator
+64. **Unauthenticated socket connections** (2026-02-17) - Allow public lobby viewing without login; auth only required for actions
+65. **Production socket configuration** (2026-02-17) - 60s ping timeout, 25s ping interval, 2min connection recovery, websocket+polling transports
 
 ### 05-02 (Leaderboard Enhancements)
 
@@ -289,7 +321,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed 05-02-PLAN.md (Leaderboard Enhancements)
-- **Commits**: 3 commits (leaderboard filters, dashboard stats API, leaderboard socket event)
-- **Duration**: 8m
+- **Stopped At**: Completed 02-01-PLAN.md (Socket.io Foundation)
+- **Commits**: 5 commits (Redis adapter, event constants, auth middleware, socket init, server config)
+- **Duration**: 3m
 - **Completed**: 2026-02-17
