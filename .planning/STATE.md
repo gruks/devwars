@@ -2,9 +2,9 @@
 
 ## Current Phase
 
-**Phase**: 03-game-engine
-**Status**: In Progress - 5 of 5 plans complete
-**Current Plan**: 03-05 Room Page Dynamic Integration ✓ Complete
+**Phase**: 04-code-execution
+**Status**: In Progress - 1 of 1 plans complete
+**Current Plan**: 04-01 Code Execution Queue ✓ Complete
 
 ## Phase Plans
 
@@ -96,35 +96,31 @@
 
 ## What's Next
 
-### Phase 3: Game Engine
+### Phase 4: Code Execution
 
-**Status**: In Progress
+**Status**: Complete
 
 **Completed Plans**:
-1. ~~03-01 — Question Model and API~~ ✓ Complete
-2. ~~03-02 — Execution Service and Evaluation~~ ✓ Complete
-3. ~~03-03 — Match State Management~~ ✓ Complete
-4. ~~03-04 — Real-time Game Socket Events~~ ✓ Complete
-5. ~~03-05 — Frontend Room Integration~~ ✓ Complete
+1. ~~04-01 — Code Execution Queue~~ ✓ Complete
 
 **Next Plan**: Phase Complete - Ready for next phase
 
-**Description**: Game engine is now complete with:
-- Question management and seeding
-- Code execution and evaluation
-- Match state management
-- Real-time socket events
-- Frontend room page with full API integration
+**Description**: Sandbox-service queue implementation complete with:
+- BullMQ queue with Redis connection
+- API server for code execution requests
+- Worker for processing execution jobs
+- Start scripts for independent component startup
 
-**Dependencies**: All components complete (✓)
+**Dependencies**: All components ready for integration
 
 ## Progress
 
 ```
-Phase 1: Foundation    [██████████] 100% (3/3 plans)
-Phase lobby-fix        [██████████] 100% (5/5 plans)
-Phase 3: Game Engine   [██████████] 100% (5/5 plans)
-Overall                [██████░░░░]  43% (13/30 plans)
+Phase 1: Foundation      [██████████] 100% (3/3 plans)
+Phase lobby-fix          [██████████] 100% (5/5 plans)
+Phase 3: Game Engine    [██████████] 100% (5/5 plans)
+Phase 4: Code Execution [██████████] 100% (1/1 plans)
+Overall                 [███████░░░]  50% (14/28 plans)
 ```
 
 ## Decisions
@@ -168,6 +164,11 @@ Overall                [██████░░░░]  43% (13/30 plans)
 44. **Rejoin pattern** (2026-02-15) - Players who leave are kept in room.players array with departedAt timestamp, enabling rejoin if room is still waiting
 45. **Active player counting** (2026-02-15) - playerCount and isFull virtuals now filter out departed players for accurate room capacity
 46. **Match results endpoint** (2026-02-15) - Fetch from /lobby/rooms/:id/results which returns winner and player scores
+
+### 04-01 (Code Execution Queue)
+
+47. **BullMQ queue** (2026-02-17) - Used BullMQ for queue management with Redis backend for job processing
+48. **Redis reconnection strategy** (2026-02-17) - Implemented exponential backoff for Redis reconnection stability
 
 ### 03-04 (Real-time Game Socket Events)
 
@@ -259,7 +260,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed 03-05-PLAN.md (Frontend Room Integration)
-- **Commits**: 5 atomic commits (3 frontend, 2 backend)
-- **Duration**: 12m
-- **Completed**: 2026-02-15
+- **Stopped At**: Completed 04-01-PLAN.md (Code Execution Queue)
+- **Commits**: 2 commits (queue implementation, summary)
+- **Duration**: 10m
+- **Completed**: 2026-02-17
