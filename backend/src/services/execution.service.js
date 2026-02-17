@@ -43,6 +43,7 @@ const executeCode = async ({ language, code, input = '', timeout = DEFAULT_TIMEO
       inputLength: input.length 
     }, 'Executing code in sandbox');
 
+    // Submit job to sandbox service
     const response = await axios.post(
       `${SANDBOX_SERVICE_URL}/api/execute`,
       {
@@ -52,13 +53,63 @@ const executeCode = async ({ language, code, input = '', timeout = DEFAULT_TIMEO
         timeout
       },
       {
-        timeout: timeout + 1000, // Add buffer for network overhead
+        timeout: 5000, // Quick timeout for job submission
         headers: {
           'Content-Type': 'application/json'
         }
       }
     );
 
+    // If job was queued, poll for result
+    if (response.data.jobId) {
+      const jobId = response.data.jobId;
+      const maxAttempts = 10;
+      const pollInterval = 500;
+      
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+        
+        try {
+          const jobResult = await axios.get(
+            `${SANDBOX_SERVICE_URL}/api/job/${jobId}`,
+            { timeout: 3000 }
+          );
+          
+          // Check if job completed (not waiting/active)
+          const status = jobResult.data.status;
+          if (status !== 'waiting' && status !== 'active' && status !== 'queued') {
+            // Job completed (success or error)
+            logger.info({
+              status: jobResult.data.status,
+              runtime: jobResult.data.runtime,
+              memory: jobResult.data.memory
+            }, 'Code execution completed');
+            
+            return {
+              success: jobResult.data.status === 'success',
+              output: jobResult.data.stdout || '',
+              error: jobResult.data.stderr || '',
+              runtime: jobResult.data.runtime,
+              memory: jobResult.data.memory
+            };
+          }
+        } catch (pollError) {
+          // Continue polling on poll errors
+          logger.warn({ error: pollError.message }, 'Polling job status');
+        }
+      }
+      
+      // Timeout waiting for result
+      return {
+        success: false,
+        output: '',
+        error: 'Execution timeout - job took too long',
+        runtime: `${timeout}ms`,
+        memory: '0mb'
+      };
+    }
+
+    // Direct result (fallback for non-async responses)
     const result = response.data;
 
     logger.info({

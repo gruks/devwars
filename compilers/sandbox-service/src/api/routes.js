@@ -45,17 +45,24 @@ export default async function executionRoutes(fastify, options) {
           code,
           input,
           timeout
+        }, {
+          timeout: timeout
         });
 
         fastify.log.info({ jobId: job.id }, '✅ Job queued');
 
-        const result = await job.waitUntilFinished(executionQueue.events);
-
-        return reply.code(200).send(result);
+        // Return immediately with job ID for polling
+        // The worker processes asynchronously
+        return reply.code(202).send({
+          status: 'queued',
+          jobId: job.id,
+          message: 'Job queued for execution'
+        });
 
       } catch (error) {
         fastify.log.error({ error: error.message }, '❌ Execution request failed');
         
+        // Return proper error response
         return reply.code(500).send({
           status: 'error',
           stdout: '',
@@ -89,5 +96,49 @@ export default async function executionRoutes(fastify, options) {
       failed,
       total: waiting + active
     };
+  });
+
+  // Get job result by ID
+  fastify.get('/job/:id', async (request, reply) => {
+    const { id } = request.params;
+    
+    try {
+      const job = await executionQueue.getJob(id);
+      
+      if (!job) {
+        return reply.code(404).send({
+          status: 'error',
+          message: 'Job not found'
+        });
+      }
+
+      const state = await job.getState();
+      const result = job.returnvalue;
+      
+      if (state === 'completed' && result) {
+        return reply.code(200).send(result);
+      } else if (state === 'failed') {
+        const failedReason = job.failedReason;
+        return reply.code(200).send({
+          status: 'error',
+          stdout: '',
+          stderr: failedReason || 'Execution failed',
+          runtime: '0ms',
+          memory: '0mb'
+        });
+      } else {
+        // Job is still processing
+        return reply.code(200).send({
+          status: state,
+          jobId: id,
+          message: 'Job is still processing'
+        });
+      }
+    } catch (error) {
+      return reply.code(500).send({
+        status: 'error',
+        message: error.message
+      });
+    }
   });
 }
