@@ -288,6 +288,9 @@ const registerGameHandlers = (io, socket) => {
       // Broadcast to lobby that room is finished
       io.to('lobby').emit('ROOM_UPDATED', { room });
 
+      // Broadcast leaderboard update to all connected clients
+      await broadcastLeaderboardUpdate(io);
+
       callback?.({
         success: true,
         data: results
@@ -402,6 +405,9 @@ const startTimerSync = (io, roomId, matchId, duration) => {
             io.to('lobby').emit('ROOM_UPDATED', { room });
           }
 
+          // Broadcast leaderboard update to all connected clients
+          await broadcastLeaderboardUpdate(io);
+
           logger.info({ matchId }, 'Match auto-ended due to timer expiry');
         }
       }
@@ -423,6 +429,47 @@ const stopTimerSync = (roomId) => {
     clearInterval(existingTimer);
     activeTimers.delete(roomId);
     logger.info({ roomId }, 'Timer sync stopped');
+  }
+};
+
+/**
+ * Broadcast leaderboard update to all connected clients
+ * Fetches top 50 users by rating and emits LEADERBOARD_UPDATE event
+ * @param {Object} io - Socket.io server instance
+ */
+const broadcastLeaderboardUpdate = async (io) => {
+  try {
+    const leaderboard = await User.find({ role: { $ne: 'admin' } })
+      .select('username stats.rating stats.wins stats.losses stats.matchesPlayed')
+      .sort({ 'stats.rating': -1 })
+      .limit(50)
+      .lean();
+
+    const leaderboardData = leaderboard.map((user, index) => {
+      const wins = user.stats?.wins || 0;
+      const losses = user.stats?.losses || 0;
+      const matchesPlayed = user.stats?.matchesPlayed || 0;
+      
+      return {
+        rank: index + 1,
+        username: user.username,
+        rating: user.stats?.rating || 1000,
+        wins,
+        losses,
+        winRate: matchesPlayed > 0
+          ? ((wins / matchesPlayed) * 100).toFixed(1) + '%'
+          : '0%'
+      };
+    });
+
+    io.emit('LEADERBOARD_UPDATE', {
+      type: 'LEADERBOARD_UPDATE',
+      data: leaderboardData
+    });
+
+    logger.info({ count: leaderboardData.length }, 'Leaderboard update broadcasted');
+  } catch (error) {
+    logger.error({ error: error.message }, 'Failed to broadcast leaderboard update');
   }
 };
 
