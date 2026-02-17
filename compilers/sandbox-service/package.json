@@ -7,7 +7,10 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "worker": "node src/workers/executor.js"
+    "worker": "node src/workers/executor.js",
+    "start:api": "node server.js",
+    "start:worker": "node src/workers/executor.js",
+    "start:all": "node server.js & node src/workers/executor.js"
   },
   "keywords": ["sandbox", "code-execution", "docker", "microservice"],
   "author": "",
