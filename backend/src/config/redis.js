@@ -4,6 +4,7 @@
  */
 
 const redis = require('redis');
+const { createAdapter } = require('@socket.io/redis-adapter');
 const { env } = require('./env');
 const logger = require('../utils/logger');
 
@@ -98,9 +99,58 @@ process.on('SIGINT', async () => {
   await disconnectRedis();
 });
 
+/**
+ * Setup Redis adapter for Socket.io
+ * Enables multi-server scaling with Redis pub/sub
+ * @param {Object} io - Socket.io instance
+ */
+async function setupRedisAdapter(io) {
+  try {
+    // Create pub/sub clients from Redis URL
+    const pubClient = redis.createClient({
+      url: env.REDIS_URL,
+      socket: {
+        reconnectStrategy: (retries) => {
+          const delay = Math.min(retries * 50, 3000);
+          return delay;
+        },
+      },
+    });
+    const subClient = pubClient.duplicate();
+
+    // Handle connection errors gracefully
+    pubClient.on('error', (err) => {
+      logger.error('Redis pub client error:', err.message);
+    });
+
+    subClient.on('error', (err) => {
+      logger.error('Redis sub client error:', err.message);
+    });
+
+    // Connect both clients
+    await Promise.all([
+      pubClient.connect(),
+      subClient.connect()
+    ]);
+
+    // Setup Redis adapter
+    io.adapter(createAdapter(pubClient, subClient));
+
+    logger.info('Redis adapter connected for Socket.io multi-server scaling');
+
+    // Return clients for cleanup if needed
+    return { pubClient, subClient };
+  } catch (error) {
+    logger.error('Failed to setup Redis adapter:', error.message);
+    // Don't crash the server - Socket.io works without adapter (single server only)
+    logger.warn('Socket.io running without Redis adapter (single server mode)');
+  }
+}
+
 module.exports = {
   redisClient,
   connectRedis,
   disconnectRedis,
   getRedisHealth,
+  setupRedisAdapter,
 };
