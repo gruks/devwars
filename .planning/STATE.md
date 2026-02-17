@@ -3,8 +3,8 @@
 ## Current Phase
 
 **Phase**: 05-stats-ranking
-**Status**: In Progress - 1 of 2 plans complete
-**Current Plan**: 05-01 Profile API ✓ Complete
+**Status**: Complete - 2 of 2 plans complete
+**Current Plan**: 05-02 Leaderboard Enhancements ✓ Complete
 
 ## Phase Plans
 
@@ -96,25 +96,29 @@
 - [x] Profile API with match history endpoint (GET /users/:username/history)
 - [x] User stats endpoint with computed winRate and tier (GET /users/:username/stats)
 - [x] Enhanced profile endpoint with comprehensive stats data
+- [x] Leaderboard filters (period: daily/weekly/monthly/all, tier: bronze/silver/gold/platinum)
+- [x] Dashboard stats API with platform analytics (GET /stats/dashboard)
+- [x] Real-time leaderboard updates via socket (LEADERBOARD_UPDATE event)
 
 ## What's Next
 
 ### Phase 5: Stats and Ranking
 
-**Status**: In Progress
+**Status**: ✓ Complete
 
 **Completed Plans**:
 1. ~~05-01 — Profile API~~ ✓ Complete
+2. ~~05-02 — Leaderboard Enhancements~~ ✓ Complete
 
-**Remaining Plans**:
-2. 05-02 — Leaderboard Enhancements
-
-**Description**: Profile API complete with:
+**Description**: Stats and ranking system complete with:
 - Match history endpoint with pagination and question details
 - User stats endpoint with computed winRate and tier rankings
 - Enhanced profile endpoint returning comprehensive user data
+- Leaderboard filters (period, tier) with winRate calculation
+- Dashboard stats API with platform-wide analytics
+- Real-time leaderboard updates via socket events
 
-**Dependencies**: Ready for leaderboard enhancements and ranking features
+**Dependencies**: Ready for next phase (TBD)
 
 ## Progress
 
@@ -123,8 +127,8 @@ Phase 1: Foundation       [██████████] 100% (3/3 plans)
 Phase lobby-fix           [██████████] 100% (5/5 plans)
 Phase 3: Game Engine      [██████████] 100% (5/5 plans)
 Phase 4: Code Execution   [██████████] 100% (2/2 plans)
-Phase 5: Stats & Ranking  [█████░░░░░]  50% (1/2 plans)
-Overall                   [█████████░]  61% (17/28 plans)
+Phase 5: Stats & Ranking  [██████████] 100% (2/2 plans)
+Overall                   [██████████]  64% (18/28 plans)
 ```
 
 ## Decisions
@@ -143,6 +147,13 @@ Overall                   [█████████░]  61% (17/28 plans)
 | Auth | JWT | Stateless, scalable |
 | Execution | Docker | Security isolation |
 - [Phase 03-game-engine]: Match status flow: waiting -> active -> finished with host-only transitions — Prevents invalid state changes and ensures fair game control
+
+### 05-02 (Leaderboard Enhancements)
+
+57. **Period filter field** (2026-02-17) - Uses `updatedAt` timestamp to filter by recent activity (daily/weekly/monthly)
+58. **Tier rating thresholds** (2026-02-17) - Matched existing skill brackets: bronze <1100, silver 1100-1299, gold 1300-1599, platinum ≥1600
+59. **Dashboard aggregation** (2026-02-17) - Parallel Promise.all for efficient statistics calculation
+60. **Socket broadcast scope** (2026-02-17) - Global io.emit for LEADERBOARD_UPDATE to all connected clients
 
 ### Recent Decisions (01-01)
 
@@ -278,7 +289,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed 05-01-PLAN.md (Profile API)
-- **Commits**: 3 commits (match history endpoint, user stats endpoint, enhanced profile)
+- **Stopped At**: Completed 05-02-PLAN.md (Leaderboard Enhancements)
+- **Commits**: 3 commits (leaderboard filters, dashboard stats API, leaderboard socket event)
 - **Duration**: 8m
 - **Completed**: 2026-02-17
