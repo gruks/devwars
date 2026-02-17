@@ -3,8 +3,8 @@
 ## Current Phase
 
 **Phase**: 04-code-execution
-**Status**: In Progress - 1 of 1 plans complete
-**Current Plan**: 04-01 Code Execution Queue ✓ Complete
+**Status**: Complete - 2 of 2 plans complete
+**Current Plan**: 04-02 Backend Integration ✓ Complete
 
 ## Phase Plans
 
@@ -102,16 +102,16 @@
 
 **Completed Plans**:
 1. ~~04-01 — Code Execution Queue~~ ✓ Complete
+2. ~~04-02 — Backend Integration~~ ✓ Complete
 
 **Next Plan**: Phase Complete - Ready for next phase
 
-**Description**: Sandbox-service queue implementation complete with:
-- BullMQ queue with Redis connection
-- API server for code execution requests
-- Worker for processing execution jobs
-- Start scripts for independent component startup
+**Description**: Backend integration complete with:
+- Async job processing with polling
+- Docker Compose for service orchestration  
+- Multi-language support verified (JS, Python, Java, Go, C++)
 
-**Dependencies**: All components ready for integration
+**Dependencies**: Ready for match evaluation integration
 
 ## Progress
 
@@ -119,8 +119,8 @@
 Phase 1: Foundation      [██████████] 100% (3/3 plans)
 Phase lobby-fix          [██████████] 100% (5/5 plans)
 Phase 3: Game Engine    [██████████] 100% (5/5 plans)
-Phase 4: Code Execution [██████████] 100% (1/1 plans)
-Overall                 [███████░░░]  50% (14/28 plans)
+Phase 4: Code Execution [██████████] 100% (2/2 plans)
+Overall                 [████████░░]  57% (16/28 plans)
 ```
 
 ## Decisions
@@ -169,6 +169,12 @@ Overall                 [███████░░░]  50% (14/28 plans)
 
 47. **BullMQ queue** (2026-02-17) - Used BullMQ for queue management with Redis backend for job processing
 48. **Redis reconnection strategy** (2026-02-17) - Implemented exponential backoff for Redis reconnection stability
+
+### 04-02 (Backend Integration)
+
+49. **Async job processing** (2026-02-17) - Changed from blocking waitUntilFinished to async polling pattern for reliability
+50. **Docker Compose orchestration** (2026-02-17) - Created compilers/docker-compose.yml for easy service startup
+51. **Multi-language verification** (2026-02-17) - Verified all 5 languages work via API: JavaScript, Python, Java, Go, C++
 
 ### 03-04 (Real-time Game Socket Events)
 
@@ -260,7 +266,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed 04-01-PLAN.md (Code Execution Queue)
-- **Commits**: 2 commits (queue implementation, summary)
-- **Duration**: 10m
+- **Stopped At**: Completed 04-02-PLAN.md (Backend Integration)
+- **Commits**: 3 commits (sandbox integration, docker-compose, language tests)
+- **Duration**: 13m
 - **Completed**: 2026-02-17
