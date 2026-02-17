@@ -7,8 +7,8 @@
 const { env } = require('./config/env.js');
 const { logger } = require('./utils/logger.js');
 const { connectDB, disconnectDB } = require('./config/db.js');
-const { connectRedis, disconnectRedis } = require('./config/redis.js');
-const { app, sessionMiddleware } = require('./app.js');
+const { connectRedis, disconnectRedis, setupRedisAdapter } = require('./config/redis.js');
+const { app } = require('./app.js');
 const PORT = env.PORT;
 
 // Start server with database connection
@@ -30,18 +30,29 @@ const startServer = async () => {
       logger.info(` Socket.io enabled for real-time features`);
     });
 
-    // Initialize Socket.io
-    const { initializeSocket } = require('./config/socket.js');
+    // Initialize Socket.io with production config
+    const { initializeSocket } = require('./modules/socket/index.js');
     const { Server } = require('socket.io');
 
     const io = new Server(httpServer, {
       cors: {
         origin: env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || ['http://localhost:5173', 'http://localhost:8080'],
         credentials: true
+      },
+      pingTimeout: 60000,
+      pingInterval: 25000,
+      transports: ['websocket', 'polling'],
+      connectionStateRecovery: {
+        maxDisconnectionDuration: 2 * 60 * 1000,
+        skipMiddlewares: true
       }
     });
 
-    initializeSocket(io, sessionMiddleware);
+    // Setup Redis adapter for multi-server scaling
+    await setupRedisAdapter(io);
+
+    // Initialize socket handlers
+    initializeSocket(io);
 
     return httpServer;
   } catch (error) {
