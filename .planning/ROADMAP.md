@@ -119,22 +119,24 @@
 
 ---
 
-### Phase 5: Stats & Ranking
+### Phase 5: Stats & Ranking ✓ Complete
 
 **Goal**: Complete the API with profile, leaderboard, and dashboard
 
 **Duration**: ~2 plans
 
+**Status**: ✓ Complete (2026-02-17)
+
 **Delivers**:
-- Profile API (user stats, match history)
-- Leaderboard API (rankings, filters)
-- Dashboard stats API
-- Leaderboard update socket event
-- Scoring service
+- Profile API (user stats, match history) ✓
+- Leaderboard API (rankings, filters) ✓
+- Dashboard stats API ✓
+- Leaderboard update socket event ✓
+- Scoring service ✓
 
 **Plans**:
-- [ ] 05-01-PLAN.md — Profile and user stats
-- [ ] 05-02-PLAN.md — Leaderboard and dashboard
+- [x] 05-01-PLAN.md — Profile and user stats
+- [x] 05-02-PLAN.md — Leaderboard and dashboard
 
 ---
 
