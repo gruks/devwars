@@ -82,40 +82,58 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
 
     const { roomId } = data;
 
+    // Find room
     const room = await Room.findById(roomId);
     if (!room) {
       throw new Error('Room not found');
     }
 
-    // Join the room socket namespace
-    socket.join(`room:${roomId}`);
-
-    // Check if user is already in the room
-    const isPlayerInRoom = room.players.some(
-      p => p.userId.toString() === socket.user.userId && !p.departedAt
-    );
-
-    // Add player if not already in
-    if (!isPlayerInRoom) {
-      try {
-        await room.addPlayer(socket.user.userId, socket.user.username);
-      } catch (err) {
-        // Player might already be in, that's okay
-        logger.debug(`Player ${socket.user.username} already in room or error: ${err.message}`);
-      }
+    // Check if can join
+    if (!room.canJoin()) {
+      throw new Error('Room is not available for joining');
     }
 
-    // Notify other players
-    socket.to(`room:${roomId}`).emit(EVENTS.ROOM.PLAYER_JOINED, {
-      player: {
-        userId: socket.user.userId,
-        username: socket.user.username,
-        isReady: false
-      },
+    // Check if already in room
+    const isAlreadyInRoom = room.players.some(
+      p => p.userId.toString() === socket.user.userId
+    );
+
+    // Leave previous room if any
+    const prevRoomId = socketRooms.get(socket.id);
+    if (prevRoomId && prevRoomId !== roomId) {
+      await leaveRoomInternal(io, socket, prevRoomId);
+    }
+
+    // Add player to room (if not already in)
+    if (!isAlreadyInRoom) {
+      await room.addPlayer(socket.user.userId, socket.user.username);
+    }
+
+    await room.populate('players.userId', 'username rating');
+
+    // Join socket to room
+    socket.join(`room:${room._id}`);
+    socketRooms.set(socket.id, room._id.toString());
+
+    logger.info(`Player ${socket.user.username} joined room ${room.name}`);
+
+    // Notify room (if new join)
+    if (!isAlreadyInRoom) {
+      socket.to(`room:${room._id}`).emit(EVENTS.ROOM.PLAYER_JOINED, {
+        roomId: room._id.toString(),
+        player: {
+          userId: socket.user.userId,
+          username: socket.user.username
+        },
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Broadcast room update to lobby
+    io.to('lobby').emit(EVENTS.ROOM.UPDATE, {
+      room: room.toObject(),
       timestamp: new Date().toISOString()
     });
-
-    logger.info(`${socket.user.username} joined room ${room.name}`);
 
     const response = {
       success: true,
@@ -137,40 +155,7 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
     }
 
     const { roomId } = data;
-
-    const room = await Room.findById(roomId);
-    if (!room) {
-      throw new Error('Room not found');
-    }
-
-    // Leave the room socket namespace
-    socket.leave(`room:${roomId}`);
-
-    // Mark player as departed
-    const player = room.players.find(
-      p => p.userId.toString() === socket.user.userId
-    );
-    if (player) {
-      player.departedAt = new Date();
-      await room.save();
-    }
-
-    // Notify other players
-    socket.to(`room:${roomId}`).emit(EVENTS.ROOM.PLAYER_LEFT, {
-      player: {
-        userId: socket.user.userId,
-        username: socket.user.username
-      },
-      timestamp: new Date().toISOString()
-    });
-
-    // Update lobby
-    io.to('lobby').emit(EVENTS.ROOM.UPDATE, {
-      room: room.toObject(),
-      timestamp: new Date().toISOString()
-    });
-
-    logger.info(`${socket.user.username} left room ${room.name}`);
+    await leaveRoomInternal(io, socket, roomId);
 
     const response = {
       success: true,
@@ -183,7 +168,7 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
   }));
 
   /**
-   * Player ready toggle
+   * Toggle player ready status
    */
   socket.on(EVENTS.ROOM.PLAYER_READY, asyncHandler(async (data, callback) => {
     if (!socket.user) {
@@ -197,7 +182,7 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
       throw new Error('Room not found');
     }
 
-    // Update player's ready status
+    // Update player ready status
     const player = room.players.find(
       p => p.userId.toString() === socket.user.userId
     );
@@ -206,24 +191,23 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
       throw new Error('You are not in this room');
     }
 
-    player.isReady = isReady;
+    player.isReady = isReady ?? !player.isReady;
     await room.save();
 
-    // Notify all players in room
-    io.to(`room:${roomId}`).emit(EVENTS.ROOM.PLAYER_READY, {
+    // Notify room
+    io.to(`room:${room._id}`).emit(EVENTS.ROOM.PLAYER_READY, {
+      roomId: room._id.toString(),
       player: {
         userId: socket.user.userId,
         username: socket.user.username,
-        isReady
+        isReady: player.isReady
       },
       timestamp: new Date().toISOString()
     });
 
-    logger.debug(`${socket.user.username} is ${isReady ? 'ready' : 'not ready'} in room ${room.name}`);
-
     const response = {
       success: true,
-      data: { player: { userId: socket.user.userId, isReady } },
+      data: { isReady: player.isReady },
       timestamp: new Date().toISOString()
     };
 
@@ -231,6 +215,38 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
       callback(response);
     }
   }));
+
+  /**
+   * Handle disconnect - cleanup
+   */
+  socket.on('disconnect', () => {
+    const roomId = socketRooms.get(socket.id);
+    if (roomId && socket.user) {
+      // Grace period before removing (allow reconnection)
+      setTimeout(async () => {
+        // Check if user reconnected with different socket
+        let isReconnected = false;
+        for (const [sid, user] of connectedUsers.entries()) {
+          if (user.userId === socket.user.userId && sid !== socket.id) {
+            isReconnected = true;
+            break;
+          }
+        }
+
+        if (!isReconnected) {
+          try {
+            await leaveRoomInternal(io, socket, roomId, true);
+          } catch (error) {
+            logger.error('Error in disconnect cleanup:', error);
+          }
+        }
+      }, 5000); // 5 second grace period
+    }
+    socketRooms.delete(socket.id);
+  });
+
+  return { socketRooms };
+};
 
   /**
    * Start match (host only)
@@ -298,5 +314,52 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
     }
   }));
 };
+
+/**
+ * Internal helper: Leave room
+ */
+async function leaveRoomInternal(io, socket, roomId, isDisconnect = false) {
+  const room = await Room.findById(roomId);
+  if (!room) return;
+
+  const userId = socket.user?.userId;
+  if (!userId) return;
+
+  // Remove player from room
+  await room.removePlayer(userId);
+
+  // Notify room
+  io.to(`room:${roomId}`).emit(EVENTS.ROOM.PLAYER_LEFT, {
+    roomId,
+    player: {
+      userId,
+      username: socket.user.username
+    },
+    timestamp: new Date().toISOString()
+  });
+
+  // Leave socket from room
+  socket.leave(`room:${roomId}`);
+
+  // Check if room still exists
+  const updatedRoom = await Room.findById(roomId);
+  if (updatedRoom) {
+    await updatedRoom.populate('players.userId', 'username rating');
+    io.to('lobby').emit(EVENTS.ROOM.UPDATE, {
+      room: updatedRoom.toObject(),
+      timestamp: new Date().toISOString()
+    });
+  } else {
+    // Room was deleted (empty)
+    io.to('lobby').emit(EVENTS.ROOM.DELETE, {
+      roomId,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  if (!isDisconnect) {
+    logger.info(`Player ${socket.user.username} left room ${room.name || roomId}`);
+  }
+}
 
 module.exports = { registerRoomHandlers };
