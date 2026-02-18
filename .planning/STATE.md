@@ -3,8 +3,8 @@
 ## Current Phase
 
 **Phase**: 02-realtime
-**Status**: In Progress - 1 of 3 plans complete
-**Current Plan**: 02-01 Socket.io Foundation ✓ Complete
+**Status**: Complete - 3 of 3 plans complete
+**Current Plan**: 02-03 Room Socket Handlers ✓ Complete
 
 ## Phase Plans
 
@@ -109,15 +109,20 @@
 - [x] Socket error handling middleware with asyncHandler
 - [x] Frontend SocketContext with auth-based connection
 - [x] Lobby page with real-time socket updates
+- [x] **Room chat handlers with 50-message in-memory cache**
+- [x] **Room handlers with match start and host authorization**
+- [x] **ChatPanel React component with real-time messaging**
+- [x] **PlayerList React component with ready status toggle**
+- [x] **Room page with socket-based real-time updates**
 
 ### Phase 02-realtime: Real-time Socket Infrastructure
 
-**Status**: In Progress - 2 of 3 plans complete
+**Status**: Complete - 3 of 3 plans complete
 
 **Completed Plans**:
 1. ~~02-01 — Socket.io Foundation~~ ✓ Complete
 2. ~~02-02 — Lobby Socket Handlers~~ ✓ Complete
-3. 02-03 — Room Socket Handlers (pending)
+3. ~~02-03 — Room Socket Handlers~~ ✓ Complete
 
 **Description**: Production-ready Socket.io infrastructure with:
 - Redis adapter for horizontal scaling
@@ -126,40 +131,30 @@
 - Modular socket structure with dedicated middleware
 - Production configuration (ping timeouts, state recovery)
 - Lobby handlers with real-time room list updates
-- Room handlers with join/leave/ready events
+- Room handlers with join/leave/ready/chat events
+- Chat system with 50-message in-memory cache
 - Frontend SocketContext with auth-gated connections
 - Error handling middleware for socket events
 
 ## What's Next
 
-### Phase 5: Stats and Ranking
+Phase 02-realtime is complete. All socket infrastructure has been implemented:
+- Socket.io foundation with Redis adapter
+- Lobby handlers for real-time room listings
+- Room handlers for chat, ready status, and match start
 
-**Status**: ✓ Complete
-
-**Completed Plans**:
-1. ~~05-01 — Profile API~~ ✓ Complete
-2. ~~05-02 — Leaderboard Enhancements~~ ✓ Complete
-
-**Description**: Stats and ranking system complete with:
-- Match history endpoint with pagination and question details
-- User stats endpoint with computed winRate and tier rankings
-- Enhanced profile endpoint returning comprehensive user data
-- Leaderboard filters (period, tier) with winRate calculation
-- Dashboard stats API with platform-wide analytics
-- Real-time leaderboard updates via socket events
-
-**Dependencies**: Ready for next phase (TBD)
+Ready for next phase (TBD)
 
 ## Progress
 
 ```
 Phase 1: Foundation       [██████████] 100% (3/3 plans)
-Phase 02-realtime         [██████░░░░]  67% (2/3 plans) - In Progress
+Phase 02-realtime         [██████████] 100% (3/3 plans) - Complete
 Phase lobby-fix           [██████████] 100% (5/5 plans)
 Phase 3: Game Engine      [██████████] 100% (5/5 plans)
 Phase 4: Code Execution   [██████████] 100% (2/2 plans)
 Phase 5: Stats & Ranking  [██████████] 100% (2/2 plans)
-Overall                   [██████████]  71% (20/28 plans)
+Overall                   [██████████]  75% (21/28 plans)
 ```
 
 ## Decisions
@@ -180,6 +175,13 @@ Overall                   [██████████]  71% (20/28 plans)
 - [Phase 03-game-engine]: Match status flow: waiting -> active -> finished with host-only transitions — Prevents invalid state changes and ensures fair game control
 - [Phase 01-foundation]: Server waits for both MongoDB and Redis before starting HTTP listener — Prevents race conditions and ensures data layer is ready before accepting requests
 - [Phase 01-foundation]: Graceful shutdown closes HTTP server first, then database connections — Prevents new requests during shutdown while allowing in-flight requests to complete
+
+### 02-03 (Room Socket Handlers)
+
+69. **In-memory message cache** (2026-02-18) - 50 messages per room stored in-memory sufficient for MVP without database persistence
+70. **Auto-scroll chat behavior** (2026-02-18) - ChatPanel automatically scrolls to bottom on new messages for optimal UX
+71. **System message styling** (2026-02-18) - System messages centered with muted background to distinguish from user chat
+72. **Toast notifications for room events** (2026-02-18) - Player join/leave events show toast notifications for awareness
 
 ### 02-02 (Lobby Socket Handlers)
 
@@ -330,13 +332,14 @@ None currently.
 - Database connections established and tested
 - Foundation infrastructure complete with logging, errors, env config
 - Authentication system complete with JWT, bcrypt, and role-based access
-- Ready for Phase 2: Core Features (lobby, rooms, matches, challenges)
+- Real-time socket infrastructure complete with Redis adapter
+- Ready for next phase (TBD)
 - Future: Microservice extraction possible from module boundaries
 - OAuth integration planned for future enhancement
 
 ## Last Session
 
-- **Stopped At**: Completed 02-02-PLAN.md (Lobby Socket Handlers)
-- **Commits**: 8 commits (room handlers, socket index, SocketContext, Lobby integration, fixes)
-- **Duration**: 6m
+- **Stopped At**: Completed 02-03-PLAN.md (Room Socket Handlers)
+- **Commits**: 5 commits (chat handlers, room handlers, ChatPanel, PlayerList, Room.tsx socket integration)
+- **Duration**: 25m
 - **Completed**: 2026-02-18
