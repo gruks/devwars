@@ -6,7 +6,7 @@
 const redis = require('redis');
 const { createAdapter } = require('@socket.io/redis-adapter');
 const { env } = require('./env');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
 
 // Create Redis client instance
 const redisClient = redis.createClient({
