@@ -24,6 +24,37 @@ const testResultSchema = new mongoose.Schema({
   actual: {
     type: String,
     default: ''
+  },
+  executionTime: {
+    type: Number, // in milliseconds
+    default: 0
+  }
+}, { _id: false });
+
+/**
+ * Enhanced test result schema with detailed execution metrics
+ */
+const enhancedTestResultSchema = new mongoose.Schema({
+  testCaseIndex: {
+    type: Number,
+    min: 0,
+    default: 0
+  },
+  passed: {
+    type: Boolean,
+    required: true
+  },
+  actualOutput: {
+    type: String,
+    default: ''
+  },
+  expectedOutput: {
+    type: String,
+    default: ''
+  },
+  executionTime: {
+    type: Number, // in milliseconds
+    default: 0
   }
 }, { _id: false });
 
@@ -60,6 +91,20 @@ const submissionSchema = new mongoose.Schema({
   submittedAt: {
     type: Date,
     default: Date.now
+  },
+  // Execution metrics
+  executionTime: {
+    type: Number, // in milliseconds
+    default: 0
+  },
+  memoryUsed: {
+    type: Number, // in MB
+    default: 0
+  },
+  // Enhanced test results with detailed metrics
+  detailedTestResults: {
+    type: [enhancedTestResultSchema],
+    default: []
   }
 }, { _id: false });
 
@@ -139,6 +184,12 @@ const matchSchema = new mongoose.Schema({
     username: {
       type: String
     }
+  },
+  // Number of spectators viewing this match (synced from room)
+  spectatorCount: {
+    type: Number,
+    default: 0,
+    min: 0
   }
 }, {
   timestamps: true,
@@ -192,6 +243,54 @@ matchSchema.methods.getPlayer = function(playerId) {
   return this.players.find(
     p => p.playerId.toString() === playerId.toString()
   );
+};
+
+// Method to update spectator count (synced from room)
+matchSchema.methods.updateSpectatorCount = function(count) {
+  this.spectatorCount = Math.max(0, count);
+  return this.save();
+};
+
+// Method to calculate scores based on test results
+matchSchema.methods.calculateScores = function() {
+  if (!this.submissions || this.submissions.length === 0) {
+    return this.players.map(p => ({ playerId: p.playerId, score: 0 }));
+  }
+  
+  const results = [];
+  
+  this.submissions.forEach(submission => {
+    const player = this.players.find(
+      p => p.playerId.toString() === submission.playerId.toString()
+    );
+    
+    if (player) {
+      // Calculate score based on test results
+      const testResults = submission.detailedTestResults || submission.testResults || [];
+      const passedCount = testResults.filter(t => t.passed).length;
+      const totalCount = testResults.length || 1;
+      
+      // Score is percentage of passed test cases
+      const score = Math.round((passedCount / totalCount) * 100);
+      
+      // Update player's score
+      player.score = score;
+      
+      // If solved (passed all tests), record solve time
+      if (passedCount === totalCount && submission.solvedAt && this.startTime) {
+        player.solvedAt = submission.solvedAt;
+      }
+      
+      results.push({
+        playerId: submission.playerId,
+        score: score,
+        passedCount: passedCount,
+        totalCount: totalCount
+      });
+    }
+  });
+  
+  return this.save().then(() => results);
 };
 
 // Indexes for efficient querying
