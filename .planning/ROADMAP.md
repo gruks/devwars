@@ -12,18 +12,31 @@
 
 ### Phase 0: Frontend Integration
 
-**Goal**: Connect code-arena React frontend to backend APIs
+**Goal**: Connect code-arena React frontend to backend APIs and build LeetCode-style competitive coding room
 
-**Duration**: ~1 plan
+**Duration**: ~11 plans
 
 **Delivers**:
-- Axios API client with auth interceptors
-- AuthContext for state management
-- Login/Signup pages connected to backend
-- Protected routes for authenticated areas
+- Axios API client with auth interceptors ✓
+- AuthContext for state management ✓
+- Login/Signup pages connected to backend ✓
+- Protected routes for authenticated areas ✓
+- MongoDB schema for test cases and spectators
+- WebSocket room broadcasting fixes
+- Docker sandbox code execution
+- LeetCode-style room page with Monaco editor
+- ML winner prediction (RandomForest)
+- Result modal with confetti
+- Private competition history
 
 **Plans**:
-- [ ] frontend-integration-01 — Connect frontend to backend auth
+- [x] frontend-integration-01 — Connect frontend to backend auth
+- [ ] frontend-integration-06 — MongoDB schema updates (test cases, spectators, history)
+- [ ] frontend-integration-07 — WebSocket room broadcasting & sync fixes
+- [ ] frontend-integration-08 — Docker sandbox code execution
+- [ ] frontend-integration-09 — Room page UI with Monaco editor & test cases
+- [ ] frontend-integration-10 — ML winner prediction service
+- [ ] frontend-integration-11 — Result modal & private history page
 
 ---
 
