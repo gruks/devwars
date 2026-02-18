@@ -245,9 +245,6 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
     socketRooms.delete(socket.id);
   });
 
-  return { socketRooms };
-};
-
   /**
    * Start match (host only)
    */
@@ -313,6 +310,8 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
       callback(response);
     }
   }));
+
+  return { socketRooms };
 };
 
 /**
