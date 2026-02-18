@@ -114,6 +114,11 @@
 - [x] **ChatPanel React component with real-time messaging**
 - [x] **PlayerList React component with ready status toggle**
 - [x] **Room page with socket-based real-time updates**
+- [x] **ProblemPanel React component with LeetCode-style layout**
+- [x] **CodeEditor with Monaco Editor integration and language selection**
+- [x] **TestCasePanel for displaying pass/fail results**
+- [x] **OpponentPanel for real-time competitor status**
+- [x] **Timer component with synchronized countdown**
 - [x] **Docker sandbox service with security constraints (256MB memory, 0.5 CPU, 50 pids)**
 - [x] **Execution API endpoints (/run, /submit, /validate, /languages)**
 - [x] **Test case evaluation with pass/fail results and complexity analysis**
@@ -121,12 +126,13 @@
 
 ### Phase frontend-integration: MongoDB Schema Updates
 
-**Status**: In Progress - 2 of 7 plans complete
+**Status**: In Progress - 4 of 7 plans complete
 
 **Completed Plans**:
 1. ~~frontend-integration-06 — MongoDB schemas (test cases, spectators, history)~~ ✓ Complete
 2. ~~frontend-integration-07 — WebSocket room broadcasting~~ ✓ Complete
 3. ~~frontend-integration-08 — Code Execution Engine~~ ✓ Complete
+4. ~~frontend-integration-09 — Room page with Monaco editor & test cases~~ ✓ Complete
 
 **Description**: MongoDB schema updates for LeetCode-style competitive coding:
 - Room model with testCases array, spectators array, enhanced submissions with metrics
@@ -156,8 +162,8 @@
 
 ## What's Next
 
-Phase frontend-integration is now in progress with MongoDB schema updates complete.
-Ready for next plan: frontend-integration-09 (Frontend integration)
+Phase frontend-integration is now in progress with 4 of 7 plans complete.
+Ready for next plan: frontend-integration-10 (ML winner prediction)
 
 ## Progress
 
@@ -168,8 +174,8 @@ Phase lobby-fix           [██████████] 100% (5/5 plans)
 Phase 3: Game Engine      [██████████] 100% (5/5 plans)
 Phase 4: Code Execution   [██████████] 100% (2/2 plans)
 Phase 5: Stats & Ranking  [██████████] 100% (2/2 plans)
-Phase frontend-integration [███       ]  29% (3/7 plans)
-Overall                   [████████   ]  82% (25/28 plans)
+Phase frontend-integration [█████      ]  57% (4/7 plans)
+Overall                   [████████   ]  86% (26/29 plans)
 ```
 
 ## Decisions
@@ -216,6 +222,12 @@ Overall                   [████████   ]  82% (25/28 plans)
 74. **Test case validation** (2026-02-18) - Runs 2 test cases, compares output with expected (trimmed whitespace), returns detailed results with pass/fail
 75. **Complexity analysis** (2026-02-18) - Heuristic analysis: loop counting for time complexity, array allocations for space complexity
 76. **Security validation** (2026-02-18) - Blocks dangerous patterns: eval, Function constructor, os/subprocess imports, exec/spawn at validation layer
+
+### frontend-integration-09 (Room Page with Monaco Editor)
+
+77. **Monaco Editor integration** (2026-02-18) - Used @monaco-editor/react for VS Code-like editing with syntax highlighting, IntelliSense, and error detection
+78. **LocalStorage persistence** (2026-02-18) - Code and language preferences saved to localStorage for session continuity
+79. **Real-time opponent sync** (2026-02-18) - Socket events for opponent code updates (first 100 chars), typing status, and test results
 64. **Unauthenticated socket connections** (2026-02-17) - Allow public lobby viewing without login; auth only required for actions
 65. **Production socket configuration** (2026-02-17) - 60s ping timeout, 25s ping interval, 2min connection recovery, websocket+polling transports
 
@@ -361,7 +373,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed frontend-integration-08-PLAN.md (Code Execution Engine)
-- **Commits**: 4 commits (Docker sandbox config, execution service, API endpoints, sandbox executor)
-- **Duration**: 10m
+- **Stopped At**: Completed frontend-integration-09-PLAN.md (Room Page with Monaco Editor)
+- **Commits**: 6 commits (ProblemPanel, CodeEditor, TestCasePanel, OpponentPanel, Timer, Room page)
+- **Duration**: 13m
 - **Completed**: 2026-02-18
