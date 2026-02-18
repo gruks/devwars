@@ -107,6 +107,15 @@ router.use('/matches', require('./modules/matches/match.routes.js'));
 router.use('/stats', require('./modules/stats/stats.routes.js'));
 
 /**
+ * Execution routes
+ * POST /api/v1/execution/run - Run code against test cases (protected)
+ * POST /api/v1/execution/submit - Submit code for match (protected)
+ * GET /api/v1/execution/languages - Get supported languages
+ * POST /api/v1/execution/validate - Validate code for security (protected)
+ */
+router.use('/execution', require('./modules/execution/execution.routes.js'));
+
+/**
  * Future module routes:
  * 
  * router.use('/users', require('./modules/users/user.routes'));
