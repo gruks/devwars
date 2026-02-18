@@ -115,6 +115,18 @@
 - [x] **PlayerList React component with ready status toggle**
 - [x] **Room page with socket-based real-time updates**
 
+### Phase frontend-integration: MongoDB Schema Updates
+
+**Status**: In Progress - 1 of N plans complete
+
+**Completed Plans**:
+1. ~~frontend-integration-06 — MongoDB schemas (test cases, spectators, history)~~ ✓ Complete
+
+**Description**: MongoDB schema updates for LeetCode-style competitive coding:
+- Room model with testCases array, spectators array, enhanced submissions with metrics
+- CompetitionHistory model for private match results with participant privacy controls
+- Match model with executionTime, memoryUsed, detailedTestResults, spectatorCount
+
 ### Phase 02-realtime: Real-time Socket Infrastructure
 
 **Status**: Complete - 3 of 3 plans complete
@@ -138,12 +150,8 @@
 
 ## What's Next
 
-Phase 02-realtime is complete. All socket infrastructure has been implemented:
-- Socket.io foundation with Redis adapter
-- Lobby handlers for real-time room listings
-- Room handlers for chat, ready status, and match start
-
-Ready for next phase (TBD)
+Phase frontend-integration is now in progress with MongoDB schema updates complete.
+Ready for next plan: frontend-integration-07 (WebSocket room broadcasting)
 
 ## Progress
 
@@ -154,7 +162,8 @@ Phase lobby-fix           [██████████] 100% (5/5 plans)
 Phase 3: Game Engine      [██████████] 100% (5/5 plans)
 Phase 4: Code Execution   [██████████] 100% (2/2 plans)
 Phase 5: Stats & Ranking  [██████████] 100% (2/2 plans)
-Overall                   [██████████]  75% (21/28 plans)
+Phase frontend-integration [██        ]   5% (1/? plans)
+Overall                   [███████    ]  78% (22/28 plans)
 ```
 
 ## Decisions
@@ -339,7 +348,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed 02-03-PLAN.md (Room Socket Handlers)
-- **Commits**: 5 commits (chat handlers, room handlers, ChatPanel, PlayerList, Room.tsx socket integration)
-- **Duration**: 25m
+- **Stopped At**: Completed frontend-integration-06-PLAN.md (Room/CompetitionHistory/Match models)
+- **Commits**: 3 commits (Room model, CompetitionHistory model, Match model)
+- **Duration**: 5m
 - **Completed**: 2026-02-18
