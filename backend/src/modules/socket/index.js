@@ -9,6 +9,7 @@ const { logger } = require('../../utils/logger.js');
 const { registerLobbyHandlers } = require('./handlers/lobby.js');
 const { registerRoomHandlers } = require('./handlers/room.js');
 const { registerChatHandlers } = require('./handlers/chat.js');
+const { registerCompetitionHandlers } = require('../../socket/handlers/competition.handlers.js');
 
 // Maps for tracking connections
 const connectedUsers = new Map(); // socketId -> { userId, username }
@@ -84,6 +85,7 @@ const initializeSocket = (io) => {
     registerLobbyHandlers(io, socket, connectedUsers);
     const { socketRooms: roomSockets } = registerRoomHandlers(io, socket, connectedUsers);
     registerChatHandlers(io, socket);
+    registerCompetitionHandlers(io, socket, connectedUsers);
     
     // Merge room socket tracking
     for (const [key, value] of roomSockets.entries()) {
