@@ -6,6 +6,9 @@
 const { socketAuthMiddleware } = require('./middleware/auth.js');
 const { EVENTS } = require('./utils/events.js');
 const { logger } = require('../../utils/logger.js');
+const { registerLobbyHandlers } = require('./handlers/lobby.js');
+const { registerRoomHandlers } = require('./handlers/room.js');
+const { registerChatHandlers } = require('./handlers/chat.js');
 
 // Maps for tracking connections
 const connectedUsers = new Map(); // socketId -> { userId, username }
@@ -77,8 +80,10 @@ const initializeSocket = (io) => {
       socketRooms.delete(socket.id);
     });
 
-    // TODO: Lobby and room handlers will be added in next plans
-    // These will be imported from ./handlers/lobby.js and ./handlers/room.js
+    // Register handlers
+    registerLobbyHandlers(io, socket, connectedUsers);
+    registerRoomHandlers(io, socket);
+    registerChatHandlers(io, socket);
   });
 
   return io;
