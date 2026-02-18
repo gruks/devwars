@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./ml-service/models:/app/models
+    environment:
+      - MODEL_PATH=/app/models/winner_predictor.pkl
+    networks:
+      - devwars-network
+
+networks:
+  devwars-network:
+    driver: bridge
