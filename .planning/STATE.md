@@ -104,14 +104,19 @@
 - [x] Domain:action event naming convention (lobby:join, room:create, match:start)
 - [x] Modular socket structure with dedicated middleware and utilities
 - [x] Production socket config (pingTimeout: 60000, connectionStateRecovery)
+- [x] Lobby socket handlers (lobby:join, lobby:leave, lobby:stats)
+- [x] Room socket handlers (room:create, room:join, room:leave, room:player_ready)
+- [x] Socket error handling middleware with asyncHandler
+- [x] Frontend SocketContext with auth-based connection
+- [x] Lobby page with real-time socket updates
 
 ### Phase 02-realtime: Real-time Socket Infrastructure
 
-**Status**: In Progress - 1 of 3 plans complete
+**Status**: In Progress - 2 of 3 plans complete
 
 **Completed Plans**:
 1. ~~02-01 — Socket.io Foundation~~ ✓ Complete
-2. 02-02 — Lobby Socket Handlers (pending)
+2. ~~02-02 — Lobby Socket Handlers~~ ✓ Complete
 3. 02-03 — Room Socket Handlers (pending)
 
 **Description**: Production-ready Socket.io infrastructure with:
@@ -120,6 +125,10 @@
 - Domain:action event naming convention (lobby:join, room:create)
 - Modular socket structure with dedicated middleware
 - Production configuration (ping timeouts, state recovery)
+- Lobby handlers with real-time room list updates
+- Room handlers with join/leave/ready events
+- Frontend SocketContext with auth-gated connections
+- Error handling middleware for socket events
 
 ## What's Next
 
@@ -145,12 +154,12 @@
 
 ```
 Phase 1: Foundation       [██████████] 100% (3/3 plans)
-Phase 02-realtime         [███░░░░░░░]  33% (1/3 plans) - In Progress
+Phase 02-realtime         [██████░░░░]  67% (2/3 plans) - In Progress
 Phase lobby-fix           [██████████] 100% (5/5 plans)
 Phase 3: Game Engine      [██████████] 100% (5/5 plans)
 Phase 4: Code Execution   [██████████] 100% (2/2 plans)
 Phase 5: Stats & Ranking  [██████████] 100% (2/2 plans)
-Overall                   [██████████]  68% (19/28 plans)
+Overall                   [██████████]  71% (20/28 plans)
 ```
 
 ## Decisions
@@ -171,6 +180,12 @@ Overall                   [██████████]  68% (19/28 plans)
 - [Phase 03-game-engine]: Match status flow: waiting -> active -> finished with host-only transitions — Prevents invalid state changes and ensures fair game control
 - [Phase 01-foundation]: Server waits for both MongoDB and Redis before starting HTTP listener — Prevents race conditions and ensures data layer is ready before accepting requests
 - [Phase 01-foundation]: Graceful shutdown closes HTTP server first, then database connections — Prevents new requests during shutdown while allowing in-flight requests to complete
+
+### 02-02 (Lobby Socket Handlers)
+
+66. **SocketContext auth gating** (2026-02-18) - Socket connects only when user authenticated, disconnects on logout
+67. **API fallback for sockets** (2026-02-18) - Lobby falls back to REST API polling when socket disconnected for resilience
+68. **5-second disconnect grace period** (2026-02-18) - Allows reconnection without losing room state on brief disconnections
 
 ### 02-01 (Socket.io Foundation)
 
@@ -321,7 +336,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed 02-01-PLAN.md (Socket.io Foundation)
-- **Commits**: 5 commits (Redis adapter, event constants, auth middleware, socket init, server config)
-- **Duration**: 3m
-- **Completed**: 2026-02-17
+- **Stopped At**: Completed 02-02-PLAN.md (Lobby Socket Handlers)
+- **Commits**: 8 commits (room handlers, socket index, SocketContext, Lobby integration, fixes)
+- **Duration**: 6m
+- **Completed**: 2026-02-18
