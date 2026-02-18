@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  sandbox:
+    build:
+      context: .
+      dockerfile: Dockerfile.sandbox
+    image: devwars-sandbox:latest
+    container_name: devwars-sandbox
+    restart: unless-stopped
+    
+    # Resource limits
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 50
+    
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    
+    # Use tmpfs for /tmp to prevent execution of binaries
+    tmpfs:
+      - /tmp:noexec,nosuid,size=50m
+    
+    # Network isolation - no external network access
+    # Note: This is intentionally disabled to allow local backend communication
+    # In production, use a custom network and restrict at firewall level
+    # networks:
+    #   - sandbox-network
+    
+    environment:
+      - NODE_ENV=production
+      
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "--version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# networks:
+#   sandbox-network:
+#     driver: bridge
+#     internal: true  # Completely isolated network

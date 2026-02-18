@@ -1,0 +1,42 @@
+# Secure Sandbox Container
+# This container runs untrusted code with strict security constraints
+FROM node:18-alpine
+
+# Security: Create non-root user
+RUN addgroup -g 1000 sandbox-user && \
+    adduser -D -u 1000 -G sandbox-user sandbox-user
+
+# Install required runtimes (minimal versions)
+RUN apk add --no-cache \
+    python3 \
+    openjdk11 \
+    go \
+    g++ \
+    bash \
+    util-linux \
+    coreutils \
+    timeout
+
+# Set working directory
+WORKDIR /sandbox
+
+# Create temp directory for code files
+RUN mkdir -p /sandbox/code /sandbox/tmp && \
+    chown -R sandbox-user:sandbox-user /sandbox
+
+# Copy entrypoint script
+COPY scripts/entrypoint.sh /sandbox/entrypoint.sh
+RUN chmod +x /sandbox/entrypoint.sh
+
+# Switch to non-root user
+USER sandbox-user
+
+# Entry point runs the execution script
+ENTRYPOINT ["/sandbox/entrypoint.sh"]
+
+# Default command (can be overridden)
+CMD ["node", "--version"]
+
+# Security: No network access (should be enforced at runtime)
+# Security: Read-only filesystem (should be enforced at runtime)
+# Security: Limited capabilities (should be enforced at runtime)
