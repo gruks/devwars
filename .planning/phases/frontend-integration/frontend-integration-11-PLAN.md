@@ -59,6 +59,7 @@ Output: Result modal component, confetti animation, history page, history API en
 </execution_context>
 
 <context>
+@E:/Projects/DevWars/.planning/phases/frontend-integration/frontend-integration-RESEARCH.md
 @E:/Projects/DevWars/backend/src/modules/competition/competitionHistory.model.js
 @E:/Projects/DevWars/code-arena/src/pages
 </context>
@@ -66,10 +67,10 @@ Output: Result modal component, confetti animation, history page, history API en
 <tasks>
 
 <task type="auto">
-  <name>Create Result Modal component</name>
+  <name>Create Result Modal component per RESEARCH.md Pattern 5</name>
   <files>code-arena/src/components/room/ResultModal.tsx</files>
   <action>
-    Create ResultModal for match completion:
+    Create ResultModal for match completion per RESEARCH.md Pattern 5:
     
     Props interface:
     - isOpen: boolean
@@ -78,88 +79,278 @@ Output: Result modal component, confetti animation, history page, history API en
         winner: { username, avatar, score }
         player1: { username, score, timeToSolve, passedTestCases }
         player2: { username, score, timeToSolve, passedTestCases }
-        mlPrediction: { confidence, reasoning }
+        mlPrediction: { confidence, reasoning, featureImportance }
         problemTitle: string
       }
     - isWinner: boolean (current user)
     
-    Layout:
-    - Overlay: Semi-transparent dark background
-    - Modal card: Centered, max-width 600px
-    - Header: "🎉 Match Complete!" or "Match Over"
-    - Winner section:
-      - Large trophy icon (gold)
-      - "Winner: {username}"
-      - Winner's avatar
-    - Score breakdown table:
-      | Metric | You | Opponent |
-      |--------|-----|----------|
-      | Score | 95 | 80 |
-      | Time | 5:23 | 8:45 |
-      | Test Cases | 2/2 | 1/2 |
-    - ML Prediction section:
-      - "Winner determined by AI"
-      - Confidence bar (0-100%)
-      - Feature importance mini-chart
-    - Bar chart comparison:
-      - Horizontal bars for each metric
-      - Your bar: blue, Opponent: gray
-    - Actions:
-      - "View History" button → navigate to /app/history
-      - "Play Again" button → navigate to lobby
-      - "Close" button
+    Implementation per RESEARCH.md Pattern 5:
+    ```typescript
+    import { useEffect, useState } from 'react';
+    import { Confetti } from './Confetti';
     
-    Animations:
-    - Modal fade in (300ms)
-    - Trophy bounce on display
-    - Numbers count up
+    interface ResultModalProps {
+      isOpen: boolean;
+      result: 'win' | 'loss' | 'draw';
+      playerStats: {
+        rank: number;
+        score: number;
+        executionTime: number;
+        testCasesPassed: number;
+      };
+      opponentStats: {
+        username: string;
+        score: number;
+      };
+      onClose: () => void;
+      onPlayAgain: () => void;
+    }
     
-    Confetti:
-    - Trigger confetti if isWinner
-    - Use canvas-confetti library
-    - Duration: 3 seconds
-    - Colors: gold, silver, primary blue
+    export function ResultModal({
+      isOpen,
+      result,
+      playerStats,
+      opponentStats,
+      onClose,
+      onPlayAgain
+    }: ResultModalProps) {
+      if (!isOpen) return null;
+      
+      return (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
+          {/* Confetti for winner (per RESEARCH.md Pattern 5) */}
+          {result === 'win' && <Confetti trigger={isOpen} mode="winner" />}
+          
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl animate-in fade-in zoom-in duration-300">
+            {/* Result Header */}
+            <div className="text-center mb-6">
+              {result === 'win' && (
+                <>
+                  <div className="text-6xl mb-2">🏆</div>
+                  <h2 className="text-3xl font-bold text-green-500">Victory!</h2>
+                </>
+              )}
+              {result === 'loss' && (
+                <>
+                  <div className="text-6xl mb-2">💪</div>
+                  <h2 className="text-3xl font-bold text-orange-500">Good Try!</h2>
+                </>
+              )}
+              {result === 'draw' && (
+                <>
+                  <div className="text-6xl mb-2">🤝</div>
+                  <h2 className="text-3xl font-bold text-blue-500">Draw!</h2>
+                </>
+              )}
+            </div>
+            
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-center">
+                <div className="text-sm text-gray-500">Your Score</div>
+                <div className="text-2xl font-bold">{playerStats.score}</div>
+              </div>
+              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-center">
+                <div className="text-sm text-gray-500">Rank</div>
+                <div className="text-2xl font-bold">#{playerStats.rank}</div>
+              </div>
+              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-center">
+                <div className="text-sm text-gray-500">Time</div>
+                <div className="text-2xl font-bold">{playerStats.executionTime}s</div>
+              </div>
+              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-center">
+                <div className="text-sm text-gray-500">Tests Passed</div>
+                <div className="text-2xl font-bold">{playerStats.testCasesPassed}</div>
+              </div>
+            </div>
+            
+            {/* Opponent Comparison */}
+            <div className="border-t pt-4 mb-6">
+              <div className="text-sm text-gray-500 text-center mb-2">
+                vs {opponentStats.username}
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-semibold">{playerStats.score}</span>
+                <span className="text-gray-400">-</span>
+                <span className="text-lg font-semibold">{opponentStats.score}</span>
+              </div>
+            </div>
+            
+            {/* ML Prediction (if available) */}
+            {mlPrediction && (
+              <div className="border-t pt-4 mb-6">
+                <div className="text-sm text-gray-500 text-center mb-2">
+                  AI Confidence: {(mlPrediction.confidence * 100).toFixed(0)}%
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-500 h-2 rounded-full transition-all duration-1000"
+                    style={{ width: `${mlPrediction.confidence * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={onPlayAgain}
+                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors"
+              >
+                Play Again
+              </button>
+              <button
+                onClick={onClose}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 py-3 rounded-lg font-semibold transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    ```
+    
+    Features per RESEARCH.md Pattern 5:
+    - Dark overlay with backdrop blur
+    - Animated modal entry (fade-in + zoom)
+    - Result-specific header with emoji and color
+    - Stats grid with score, rank, time, test cases
+    - Opponent comparison with vs display
+    - ML prediction confidence bar
+    - Confetti animation for wins
+    - Play Again and Close actions
+    
+    Styling:
+    - Dark theme support (dark:bg-gray-900)
+    - Responsive max-width (max-w-md)
+    - Centered layout with flex
+    - Consistent with RESEARCH.md examples
   </action>
-  <verify>Modal displays winner, scores, comparison chart</verify>
-  <done>Result modal with winner display and score breakdown</done>
+  <verify>Modal displays per RESEARCH.md Pattern 5: winner, stats grid, opponent comparison, ML confidence, confetti for wins</verify>
+  <done>Result modal per RESEARCH.md Pattern 5 with winner celebration</done>
 </task>
 
 <task type="auto">
-  <name>Create Confetti animation component</name>
+  <name>Create Confetti animation component per RESEARCH.md Pattern 5</name>
   <files>code-arena/src/components/room/Confetti.tsx</files>
   <action>
-    Create reusable Confetti component:
+    Create reusable Confetti component per RESEARCH.md Pattern 5:
     
-    Install: canvas-confetti
+    Install: canvas-confetti@^1.9.0, react-use@^17.5 (for useWindowSize)
     
     Props interface:
     - trigger: boolean (start animation when true)
     - duration?: number (default: 3000ms)
     - particleCount?: number (default: 150)
     - colors?: string[] (default: ['#FFD700', '#C0C0C0', '#3B82F6'])
+    - mode?: 'celebration' | 'subtle' | 'winner'
     
-    Implementation:
-    - Use canvas-confetti library
-    - Fire from center of screen
-    - Spread: 360 degrees
-    - Gravity: 1.2
-    - Drift: 0
-    - Ticks: 200
+    Implementation per RESEARCH.md Pattern 5:
+    ```typescript
+    import { useEffect, useState } from 'react';
+    import confetti from 'canvas-confetti';
+    import { useWindowSize } from 'react-use';
     
-    Variants:
-    - mode: 'celebration' (default) - full confetti burst
-    - mode: 'subtle' - fewer particles, shorter duration
-    - mode: 'winner' - gold emphasis, longer duration
+    interface ConfettiProps {
+      trigger: boolean;
+      duration?: number;
+      particleCount?: number;
+      colors?: string[];
+      mode?: 'celebration' | 'subtle' | 'winner';
+    }
     
-    Cleanup:
-    - Auto-stop after duration
-    - Cancel animation on unmount
+    export function Confetti({
+      trigger,
+      duration = 3000,
+      particleCount = 150,
+      colors = ['#FFD700', '#C0C0C0', '#3B82F6'],
+      mode = 'celebration'
+    }: ConfettiProps) {
+      const { width, height } = useWindowSize();
+      const [isActive, setIsActive] = useState(false);
+      
+      useEffect(() => {
+        if (!trigger || isActive) return;
+        
+        setIsActive(true);
+        
+        // Multiple bursts for dramatic effect (per RESEARCH.md Pattern 5)
+        const end = Date.now() + duration;
+        
+        const frame = () => {
+          // Left side burst
+          confetti({
+            particleCount: 3,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: colors,
+            gravity: 1.2,
+            drift: 0,
+            ticks: 200
+          });
+          
+          // Right side burst  
+          confetti({
+            particleCount: 3,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: colors,
+            gravity: 1.2,
+            drift: 0,
+            ticks: 200
+          });
+          
+          if (Date.now() < end) {
+            requestAnimationFrame(frame);
+          } else {
+            setIsActive(false);
+          }
+        };
+        
+        frame();
+        
+        return () => {
+          setIsActive(false);
+        };
+      }, [trigger, duration, colors, width, height, isActive]);
+      
+      return null; // Confetti renders to canvas automatically
+    }
+    ```
+    
+    Mode configurations per RESEARCH.md:
+    - 'celebration': 3000ms, 150 particles, multi-color
+    - 'subtle': 1500ms, 80 particles, fewer bursts
+    - 'winner': 4000ms, 200 particles, gold emphasis colors ['#FFD700', '#FFA500', '#FF6B35']
+    
+    Performance considerations (per RESEARCH.md Pitfall 5):
+    - Use requestAnimationFrame for smooth animation
+    - Auto-stop after duration to prevent memory leaks
+    - Check isActive to prevent duplicate triggers
+    - Canvas-confetti is GPU-accelerated (2.4M weekly downloads)
     
     Usage in ResultModal:
-    - {isWinner && <Confetti trigger={isOpen} mode="winner" />}
+    ```tsx
+    import { Confetti } from './Confetti';
+    
+    export function ResultModal({ isOpen, result, ...props }) {
+      const isWinner = result === 'win';
+      
+      return (
+        <div className="modal-overlay">
+          {isWinner && <Confetti trigger={isOpen} mode="winner" />}
+          {/* modal content */}
+        </div>
+      );
+    }
+    ```
   </action>
-  <verify>Confetti animates when triggered, auto-cleans up</verify>
-  <done>Confetti animation component for winner celebration</done>
+  <verify>Confetti animates with multiple bursts when triggered, auto-cleans up after duration, uses requestAnimationFrame</verify>
+  <done>Confetti animation component per RESEARCH.md Pattern 5 with winner celebration mode</done>
 </task>
 
 <task type="auto">
@@ -253,52 +444,169 @@ Output: Result modal component, confetti animation, history page, history API en
 </task>
 
 <task type="auto">
-  <name>Build History page</name>
+  <name>Build History page per RESEARCH.md pattern</name>
   <files>code-arena/src/pages/History.tsx</files>
   <action>
-    Create History page at /app/history:
+    Create History page at /app/history per RESEARCH.md competition history pattern:
     
-    Layout:
-    - Page header: "Competition History" + back button
-    - Stats summary cards (top):
-      - Total competitions: X
-      - Win rate: X%
-      - Best streak: X
-      - Average score: X
-    - Filter controls:
-      - Search by opponent name
-      - Filter by result: All | Wins | Losses
-      - Sort by: Date | Score
-    - History list:
-      - Grid or list of HistoryCard components
-      - Infinite scroll or pagination
-      - Empty state: "No competitions yet"
+    ```typescript
+    import { useEffect, useState } from 'react';
+    import { api } from '../lib/api';
+    import { useAuth } from '../contexts/AuthContext';
+    import { HistoryCard } from '../components/history/HistoryCard';
     
-    Data fetching:
-    - useEffect: fetch history on mount
-    - React Query or useState + useEffect
-    - Pagination: page/limit state
+    interface MatchSummary {
+      _id: string;
+      startedAt: string;
+      duration: number;
+      problem: {
+        title: string;
+        difficulty: 'easy' | 'medium' | 'hard';
+      };
+      myResult: {
+        rank: number;
+        score: number;
+        ratingChange: number;
+      };
+      opponent: {
+        username: string;
+        score: number;
+      };
+      winner: string | null; // userId of winner
+    }
     
-    Loading state:
-    - Skeleton cards while loading
-    - Spinner for initial load
+    export function HistoryPage() {
+      const { user } = useAuth();
+      const [matches, setMatches] = useState<MatchSummary[]>([]);
+      const [isLoading, setIsLoading] = useState(true);
+      const [filter, setFilter] = useState<'all' | 'wins' | 'losses'>('all');
+      
+      useEffect(() => {
+        const fetchHistory = async () => {
+          try {
+            const response = await api.get('/api/v1/competition/history');
+            setMatches(response.data.data.history);
+          } catch (error) {
+            console.error('Failed to fetch history:', error);
+          } finally {
+            setIsLoading(false);
+          }
+        };
+        
+        fetchHistory();
+      }, []);
+      
+      const filteredMatches = matches.filter(match => {
+        if (filter === 'all') return true;
+        if (filter === 'wins') return match.winner === user?.id;
+        if (filter === 'losses') return match.winner && match.winner !== user?.id;
+        return true;
+      });
+      
+      // Stats calculation per RESEARCH.md
+      const stats = {
+        total: matches.length,
+        wins: matches.filter(m => m.winner === user?.id).length,
+        winRate: matches.length > 0 
+          ? Math.round((matches.filter(m => m.winner === user?.id).length / matches.length) * 100)
+          : 0,
+        avgScore: matches.length > 0
+          ? Math.round(matches.reduce((acc, m) => acc + m.myResult.score, 0) / matches.length)
+          : 0
+      };
+      
+      if (isLoading) {
+        return (
+          <div className="max-w-4xl mx-auto p-6">
+            <div className="animate-pulse space-y-4">
+              <div className="h-8 bg-gray-700 rounded w-1/3"></div>
+              <div className="grid grid-cols-3 gap-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-24 bg-gray-700 rounded"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      }
+      
+      return (
+        <div className="max-w-4xl mx-auto p-6">
+          <h1 className="text-3xl font-bold mb-6">Competition History</h1>
+          
+          {/* Stats Overview */}
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+              <div className="text-2xl font-bold">{stats.total}</div>
+              <div className="text-gray-500">Total Matches</div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+              <div className="text-2xl font-bold text-green-500">{stats.winRate}%</div>
+              <div className="text-gray-500">Win Rate</div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+              <div className="text-2xl font-bold">{stats.avgScore}</div>
+              <div className="text-gray-500">Avg Score</div>
+            </div>
+          </div>
+          
+          {/* Filter Tabs */}
+          <div className="flex gap-2 mb-6">
+            {(['all', 'wins', 'losses'] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-4 py-2 rounded-lg capitalize ${
+                  filter === f 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+          
+          {/* Match List */}
+          <div className="space-y-4">
+            {filteredMatches.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">🏆</div>
+                <p className="text-gray-500 mb-4">No competitions found</p>
+                <a 
+                  href="/app/lobby" 
+                  className="inline-block px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  Join a Room
+                </a>
+              </div>
+            ) : (
+              filteredMatches.map((match) => (
+                <HistoryCard key={match._id} match={match} currentUserId={user?.id} />
+              ))
+            )}
+          </div>
+        </div>
+      );
+    }
+    ```
     
-    Error state:
-    - Retry button
-    - Error message
+    Features per RESEARCH.md:
+    - Stats overview (total, win rate, avg score)
+    - Filter tabs (all/wins/losses)
+    - History cards with problem, opponent, result
+    - Empty state with CTA to lobby
+    - Dark theme support
+    - Loading skeletons
+    - Responsive layout (max-w-4xl)
     
-    Styling:
-    - Dark theme consistent with app
-    - Container max-width 1200px
-    - Responsive grid (1 col mobile, 2 col tablet, 3 col desktop)
-    
-    Empty state:
-    - Icon: trophy or gamepad
-    - Text: "You haven't competed yet"
-    - CTA: "Join a Room" button → /app/lobby
+    API Integration:
+    - GET /api/v1/competition/history?page=1&limit=10
+    - Returns only user's competitions (privacy enforced)
+    - Supports pagination
   </action>
-  <verify>Page fetches and displays history, filters work</verify>
-  <done>Competition history page with stats and list</done>
+  <verify>Page fetches history from API, displays stats cards, filter tabs work, shows HistoryCard components</verify>
+  <done>Competition history page per RESEARCH.md pattern with stats and filtering</done>
 </task>
 
 <task type="auto">

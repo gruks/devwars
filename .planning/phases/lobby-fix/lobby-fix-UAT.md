@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: complete
 phase: lobby-fix
 source: lobby-fix-01-SUMMARY.md, lobby-fix-02-SUMMARY.md, lobby-fix-03-SUMMARY.md, lobby-fix-04-SUMMARY.md
 started: 2026-02-14T10:00:00Z
-updated: 2026-02-14T10:15:00Z
+updated: 2026-02-18T00:20:00Z
 ---
 
 ## Current Test
@@ -14,127 +14,92 @@ updated: 2026-02-14T10:15:00Z
 
 ### 1. Login and Session Persistence
 expected: User registers or logs in. Closes browser completely. Reopens the app. User should still be logged in without entering credentials again.
-result: issue
-reported: "The frontend is sending multiple requests and i am not able to type. Auth check failed: AxiosError: Request aborted. I deleted a null file after which the problem began."
-severity: blocker
+result: pass
 
 ### 2. Token Auto-Refresh
 expected: User is logged in and actively using the app. After 5 minutes, tokens should automatically refresh in the background without user action.
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ### 3. Create Room Form
 expected: User navigates to lobby, clicks "Create Room", fills in desired settings (mode, max players, difficulty, timer), clicks Create. Room is created and appears in the lobby list.
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ### 4. Auto-Generated Room Name
 expected: User creates a room without providing a name. System auto-generates a name in format "Room-XXXXXX" (6 random characters) and displays it.
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ### 5. Skill Level Display
 expected: User views a room. Room displays correct skill level (Beginner/Intermediate/Advanced/Expert) based on the creator's rating.
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ### 6. Match Start (Host Only)
 expected: User is room host with 2+ players in room. User clicks "Start Match". Game status changes to "playing", all players see match has begun.
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ### 7. Match End and Rating Update
 expected: A match ends (host ends it). Players check their profile. Winners gain +25 rating, losers lose -15 rating (minimum 100).
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ### 8. Room Status Badges
 expected: User views lobby. Each room shows a status badge: "Waiting" (yellow), "Playing" (blue), or "Finished" (gray).
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ### 9. Relative Time Display
 expected: User views room details. Room shows when it was created in relative format (e.g., "2m ago", "1h ago", "Yesterday").
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ### 10. Lobby Filtering by Mode
 expected: User selects filter dropdown (e.g., "Ranked" or "Casual"). Lobby shows only rooms matching that mode.
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ### 11. Lobby Filtering by Status
 expected: User selects status filter (e.g., "Waiting" or "Playing"). Lobby shows only rooms with that status.
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ### 12. Room Search by Name
 expected: User types room name in search box. Lobby shows rooms matching the name (case-insensitive).
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ### 13. Room Search by Invite Code
 expected: User types invite code in search box. Lobby shows rooms with that exact invite code.
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ### 14. Join a Room
 expected: User clicks "Join" on a room that is waiting and not full. User successfully joins the room and sees themselves in the player list.
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ### 15. Cannot Join Full Room
 expected: User attempts to join a room that has reached max players. User receives error message and remains in lobby.
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ### 16. Cannot Join Playing Room
 expected: User attempts to join a room that is already "playing". User receives error message and remains in lobby.
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ### 17. Leave a Room
 expected: User is in a room, clicks "Leave". User is removed from room player list, returns to lobby.
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ### 18. Host Transfer on Leave
 expected: Host leaves a room with other players. First remaining player automatically becomes the new host.
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ### 19. Empty Room Auto-Deletion
 expected: User is the last player in a room and leaves. Room is automatically deleted from lobby.
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ### 20. Lobby Auto-Refresh
 expected: User is in lobby. Another user creates/joins/leaves a room. Lobby automatically updates within 5 seconds to reflect the change.
-result: skipped
-reason: Blocked by issue #1 - cannot test without login working
+result: pass
 
 ## Summary
 
 total: 20
-passed: 0
-issues: 1
+passed: 20
+issues: 0
 pending: 0
-skipped: 19
+skipped: 0
 
 ## Gaps
 
-- truth: "User registers or logs in. Closes browser completely. Reopens the app. User should still be logged in without entering credentials again."
-  status: failed
-  reason: "User reported: The frontend is sending multiple requests and i am not able to type. Auth check failed: AxiosError: Request aborted. I deleted a null file after which the problem began."
-  severity: blocker
-  test: 1
-  root_cause: "Backend auth.middleware.js ONLY accepts JWT in Authorization: Bearer header. Frontend uses cookie-based auth (withCredentials: true). When browser reopens, frontend sends cookies but NO Authorization header, backend rejects with 401, creates retry loop causing Request aborted errors and UI freeze."
-  artifacts:
-    - path: "backend/src/modules/auth/auth.middleware.js"
-      issue: "authenticate middleware only reads Authorization header, no cookie fallback"
-    - path: "code-arena/src/lib/api.ts"
-      issue: "Frontend expects cookies to work but backend doesn't read them"
-  missing:
-    - "Add cookie fallback to read accessToken from cookies in auth.middleware.js"
-    - "Or update frontend to send Authorization header with extracted JWT"
-  debug_session: ".planning/debug/auth-request-aborted.md"
+[none - all tests passed after cookie auth fix]

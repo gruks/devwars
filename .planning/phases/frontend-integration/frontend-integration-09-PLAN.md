@@ -61,6 +61,7 @@ Output: Complete Room page with all panels, Monaco editor integration, test case
 </execution_context>
 
 <context>
+@E:/Projects/DevWars/.planning/phases/frontend-integration/frontend-integration-RESEARCH.md
 @E:/Projects/DevWars/code-arena/src/pages/Room.tsx
 @E:/Projects/DevWars/code-arena/src/contexts/SocketContext.tsx
 </context>
@@ -101,38 +102,113 @@ Output: Complete Room page with all panels, Monaco editor integration, test case
   <name>Create Code Editor component with Monaco</name>
   <files>code-arena/src/components/room/CodeEditor.tsx</files>
   <action>
-    Create CodeEditor component using Monaco Editor:
+    Create CodeEditor component using Monaco Editor per RESEARCH.md Pattern 1:
     
-    Install: @monaco-editor/react
+    Install: @monaco-editor/react@^4.7.0
     
     Props interface:
     - code: string
-    - language: string
-    - onChange: (code: string) => void
+    - language: string ('javascript' | 'python' | 'java' | 'go' | 'cpp')
+    - onChange: (value: string) => void
     - onLanguageChange: (lang: string) => void
     - readOnly?: boolean
+    - height?: string (default: "60vh")
     
-    Features:
-    - Monaco Editor with dark theme (vs-dark)
-    - Language dropdown: JavaScript, Python, Java, Go, C++
-    - Default code templates per language:
-      - JavaScript: function solution(nums) {\n  // Write your code here\n}
-      - Python: def solution(nums):\n    # Write your code here\n    pass
-    - Auto-save to localStorage (key: room-{roomId}-code)
-    - Line numbers, minimap, syntax highlighting
-    - Keyboard shortcuts: Ctrl+Enter to run, Ctrl+S (prevent default save)
+    Implementation per RESEARCH.md Pattern 1:
+    ```typescript
+    import Editor from '@monaco-editor/react';
+    import { useRef, useCallback } from 'react';
+    
+    export function CodeEditor({
+      code,
+      language,
+      onChange,
+      onLanguageChange,
+      readOnly = false,
+      height = "60vh"
+    }: CodeEditorProps) {
+      const editorRef = useRef(null);
+      const monacoRef = useRef(null);
+      
+      const handleEditorDidMount = (editor, monaco) => {
+        editorRef.current = editor;
+        monacoRef.current = monaco;
+        
+        // Configure TypeScript/JavaScript defaults per RESEARCH.md
+        monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true);
+        
+        // Restore code from localStorage on mount
+        const savedCode = localStorage.getItem(`room-${roomId}-code`);
+        if (savedCode && !code) {
+          editor.setValue(savedCode);
+        }
+      };
+      
+      const handleChange = useCallback((value) => {
+        onChange(value || '');
+        // Debounced save to localStorage
+        localStorage.setItem(`room-${roomId}-code`, value || '');
+      }, [onChange]);
+      
+      return (
+        <Editor
+          height={height}
+          language={language}
+          value={code}
+          onChange={handleChange}
+          onMount={handleEditorDidMount}
+          theme="vs-dark"
+          options={{
+            minimap: { enabled: false },
+            fontSize: 14,
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+            padding: { top: 16 },
+            lineNumbers: "on",
+            roundedSelection: false,
+            readOnly: readOnly,
+            scrollbar: {
+              useShadows: false,
+              verticalHasArrows: false,
+              horizontalHasArrows: false,
+              vertical: "auto",
+              horizontal: "auto"
+            }
+          }}
+        />
+      );
+    }
+    ```
+    
+    Language dropdown: JavaScript, Python, Java, Go, C++
+    
+    Default code templates per language:
+    - JavaScript: function solution(nums) {\n  // Write your code here\n  return result;\n}
+    - Python: def solution(nums):\n    # Write your code here\n    pass
+    - Java: public class Solution {\n    public int[] solution(int[] nums) {\n        // Write your code here\n        return result;\n    }\n}
+    - Go: func solution(nums []int) []int {\n    // Write your code here\n    return result\n}
+    - C++: #include <vector>\nusing namespace std;\n\nvector<int> solution(vector<int>& nums) {\n    // Write your code here\n    return result;\n}
     
     Toolbar:
     - Language selector dropdown
-    - Settings gear (font size, theme)
+    - Settings gear (font size: 12/14/16/18)
     - Fullscreen toggle
     
-    Events:
-    - onChange debounced (500ms) → emit code_update to socket
-    - onMount → restore code from localStorage if exists
+    Keyboard shortcuts (per RESEARCH.md anti-patterns - use local state, not global):
+    - Ctrl+Enter: Trigger onRun callback
+    - Ctrl+S: Prevent default browser save, show "Auto-saved" toast
+    
+    Real-time sync:
+    - onChange debounced (500ms) → emit 'competition:code_update' via useRoomSync
+    - Send only first 100 chars to opponent for preview
+    
+    Performance optimization (per RESEARCH.md):
+    - Use useCallback for onChange handler
+    - Don't store editor content in global state (Redux/Zustand)
+    - Keep in local state + localStorage only
   </action>
-  <verify>Monaco editor renders, language switch works, onChange emits</verify>
-  <done>Monaco code editor with language support and templates</done>
+  <verify>Monaco editor renders with vs-dark theme, language switch works, onChange emits debounced updates, localStorage persistence works</verify>
+  <done>Monaco code editor per RESEARCH.md Pattern 1 with optimized configuration</done>
 </task>
 
 <task type="auto">

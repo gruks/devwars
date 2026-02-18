@@ -57,6 +57,7 @@ Output: Fixed WebSocket handlers, new competition handlers, room sync middleware
 </execution_context>
 
 <context>
+@E:/Projects/DevWars/.planning/phases/frontend-integration/frontend-integration-RESEARCH.md
 @E:/Projects/DevWars/backend/src/socket/handlers/room.handlers.js
 @E:/Projects/DevWars/backend/src/services/room.service.js
 @E:/Projects/DevWars/code-arena/src/contexts/SocketContext.tsx
@@ -146,40 +147,163 @@ Output: Fixed WebSocket handlers, new competition handlers, room sync middleware
 </task>
 
 <task type="auto">
-  <name>Create useRoomSync frontend hook</name>
+  <name>Create useRoomSync hook per RESEARCH.md Pattern 3</name>
   <files>code-arena/src/hooks/useRoomSync.ts</files>
   <action>
-    Create React hook for room synchronization:
+    Create React hook for room synchronization per RESEARCH.md Pattern 3 (Room State Synchronization Hook):
     
-    interface UseRoomSyncOptions {
+    ```typescript
+    import { useEffect, useState, useCallback } from 'react';
+    import { useSocket } from '../contexts/SocketContext';
+    
+    interface RoomState {
       roomId: string;
-      onTimerUpdate?: (remainingTime: number) => void;
-      onOpponentCodeUpdate?: (data: OpponentCodeUpdate) => void;
-      onOpponentRunning?: () => void;
-      onOpponentSubmitted?: () => void;
-      onOpponentProgress?: (progress: number) => void;
-      onRunResult?: (result: RunResult) => void;
-      onRoomStateSync?: (state: RoomState) => void;
+      status: 'waiting' | 'starting' | 'in_progress' | 'completed';
+      participants: Participant[];
+      spectators: Spectator[];
+      currentProblem: Problem | null;
+      timeRemaining: number;
+      submissions: Submission[];
     }
     
-    Hook provides:
-    - connect(): Join socket room
-    - disconnect(): Leave socket room
-    - emitCodeUpdate(code: string): Send code changes
-    - emitRunCode(code: string, language: string): Request code execution
-    - emitSubmitCode(code: string, language: string): Submit solution
-    - isConnected: boolean
-    - opponentStatus: 'idle' | 'typing' | 'running' | 'submitted'
-    - opponentProgress: number (0-100)
+    interface UseRoomSyncReturn {
+      roomState: RoomState | null;
+      isLoading: boolean;
+      error: string | null;
+      isConnected: boolean;
+      opponentStatus: 'idle' | 'typing' | 'running' | 'submitted';
+      opponentProgress: number;
+      emitCodeUpdate: (code: string) => void;
+      emitRunCode: (code: string, language: string) => void;
+      emitSubmitCode: (code: string, language: string) => void;
+    }
     
-    Use useEffect to:
-    - Join room on mount
-    - Set up socket event listeners
-    - Clean up on unmount
-    - Handle reconnection with room_state_sync
+    export function useRoomSync(roomId: string): UseRoomSyncReturn {
+      const { socket, joinRoom, leaveRoom } = useSocket();
+      const [roomState, setRoomState] = useState<RoomState | null>(null);
+      const [isLoading, setIsLoading] = useState(true);
+      const [error, setError] = useState<string | null>(null);
+      const [opponentStatus, setOpponentStatus] = useState<'idle' | 'typing' | 'running' | 'submitted'>('idle');
+      const [opponentProgress, setOpponentProgress] = useState(0);
+      
+      useEffect(() => {
+        if (!socket || !roomId) return;
+        
+        // Join room on mount (per RESEARCH.md Pattern 3)
+        joinRoom(roomId);
+        setIsLoading(true);
+        
+        // Full state on join (per RESEARCH.md - don't sync entire state on every update)
+        socket.on('room:state', (state: RoomState) => {
+          setRoomState(state);
+          setIsLoading(false);
+        });
+        
+        socket.on('room:error', (err: { message: string }) => {
+          setError(err.message);
+          setIsLoading(false);
+        });
+        
+        // Incremental updates (per RESEARCH.md anti-pattern: don't sync entire room state)
+        socket.on('room:participant_joined', (participant) => {
+          setRoomState(prev => prev ? {
+            ...prev,
+            participants: [...prev.participants, participant]
+          } : null);
+        });
+        
+        socket.on('room:participant_left', ({ userId }) => {
+          setRoomState(prev => prev ? {
+            ...prev,
+            participants: prev.participants.filter(p => p.userId !== userId)
+          } : null);
+        });
+        
+        socket.on('room:status_changed', ({ status }) => {
+          setRoomState(prev => prev ? { ...prev, status } : null);
+        });
+        
+        socket.on('room:timer_update', ({ timeRemaining }) => {
+          setRoomState(prev => prev ? { ...prev, timeRemaining } : null);
+        });
+        
+        // Competition-specific events
+        socket.on('opponent:code_update', () => {
+          setOpponentStatus('typing');
+          // Reset to idle after 3 seconds of no updates
+          setTimeout(() => setOpponentStatus('idle'), 3000);
+        });
+        
+        socket.on('opponent:running', () => {
+          setOpponentStatus('running');
+        });
+        
+        socket.on('opponent:submitted', () => {
+          setOpponentStatus('submitted');
+        });
+        
+        socket.on('opponent:progress', ({ progress }) => {
+          setOpponentProgress(progress);
+        });
+        
+        socket.on('run:result', (result) => {
+          // Handle run result - update local state or call callback
+        });
+        
+        // Cleanup (per RESEARCH.md Pattern 3)
+        return () => {
+          leaveRoom(roomId);
+          socket.off('room:state');
+          socket.off('room:error');
+          socket.off('room:participant_joined');
+          socket.off('room:participant_left');
+          socket.off('room:status_changed');
+          socket.off('room:timer_update');
+          socket.off('opponent:code_update');
+          socket.off('opponent:running');
+          socket.off('opponent:submitted');
+          socket.off('opponent:progress');
+          socket.off('run:result');
+        };
+      }, [socket, roomId, joinRoom, leaveRoom]);
+      
+      const emitCodeUpdate = useCallback((code: string) => {
+        if (!socket) return;
+        socket.emit('competition:code_update', { roomId, codeSnippet: code.substring(0, 100) });
+      }, [socket, roomId]);
+      
+      const emitRunCode = useCallback((code: string, language: string) => {
+        if (!socket) return;
+        socket.emit('competition:run_code', { roomId, code, language });
+      }, [socket, roomId]);
+      
+      const emitSubmitCode = useCallback((code: string, language: string) => {
+        if (!socket) return;
+        socket.emit('competition:submit_code', { roomId, code, language });
+      }, [socket, roomId]);
+      
+      return {
+        roomState,
+        isLoading,
+        error,
+        isConnected: !!socket?.connected,
+        opponentStatus,
+        opponentProgress,
+        emitCodeUpdate,
+        emitRunCode,
+        emitSubmitCode
+      };
+    }
+    ```
+    
+    Key patterns from RESEARCH.md:
+    - Full state on room join, incremental updates via specific events
+    - Always cleanup listeners in useEffect return
+    - Use useCallback for emit functions to prevent re-renders
+    - Don't store socket state in Redux/Zustand (anti-pattern)
   </action>
-  <verify>Hook connects to socket, listens for events, provides emit functions</verify>
-  <done>Frontend room sync hook created for real-time updates</done>
+  <verify>Hook connects to socket via SocketContext, listens for room events, provides emit functions, cleans up on unmount</verify>
+  <done>Frontend room sync hook per RESEARCH.md Pattern 3 with proper cleanup</done>
 </task>
 
 <task type="auto">
