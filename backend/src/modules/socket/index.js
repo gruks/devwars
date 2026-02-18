@@ -82,8 +82,13 @@ const initializeSocket = (io) => {
 
     // Register handlers
     registerLobbyHandlers(io, socket, connectedUsers);
-    registerRoomHandlers(io, socket);
+    const { socketRooms: roomSockets } = registerRoomHandlers(io, socket, connectedUsers);
     registerChatHandlers(io, socket);
+    
+    // Merge room socket tracking
+    for (const [key, value] of roomSockets.entries()) {
+      socketRooms.set(key, value);
+    }
   });
 
   return io;
