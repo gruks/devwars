@@ -114,13 +114,19 @@
 - [x] **ChatPanel React component with real-time messaging**
 - [x] **PlayerList React component with ready status toggle**
 - [x] **Room page with socket-based real-time updates**
+- [x] **Docker sandbox service with security constraints (256MB memory, 0.5 CPU, 50 pids)**
+- [x] **Execution API endpoints (/run, /submit, /validate, /languages)**
+- [x] **Test case evaluation with pass/fail results and complexity analysis**
+- [x] **Code security validation (blocks eval, exec, subprocess)**
 
 ### Phase frontend-integration: MongoDB Schema Updates
 
-**Status**: In Progress - 1 of N plans complete
+**Status**: In Progress - 2 of 7 plans complete
 
 **Completed Plans**:
 1. ~~frontend-integration-06 — MongoDB schemas (test cases, spectators, history)~~ ✓ Complete
+2. ~~frontend-integration-07 — WebSocket room broadcasting~~ ✓ Complete
+3. ~~frontend-integration-08 — Code Execution Engine~~ ✓ Complete
 
 **Description**: MongoDB schema updates for LeetCode-style competitive coding:
 - Room model with testCases array, spectators array, enhanced submissions with metrics
@@ -151,7 +157,7 @@
 ## What's Next
 
 Phase frontend-integration is now in progress with MongoDB schema updates complete.
-Ready for next plan: frontend-integration-07 (WebSocket room broadcasting)
+Ready for next plan: frontend-integration-09 (Frontend integration)
 
 ## Progress
 
@@ -162,8 +168,8 @@ Phase lobby-fix           [██████████] 100% (5/5 plans)
 Phase 3: Game Engine      [██████████] 100% (5/5 plans)
 Phase 4: Code Execution   [██████████] 100% (2/2 plans)
 Phase 5: Stats & Ranking  [██████████] 100% (2/2 plans)
-Phase frontend-integration [██        ]   5% (1/? plans)
-Overall                   [███████    ]  78% (22/28 plans)
+Phase frontend-integration [███       ]  29% (3/7 plans)
+Overall                   [████████   ]  82% (25/28 plans)
 ```
 
 ## Decisions
@@ -203,6 +209,13 @@ Overall                   [███████    ]  78% (22/28 plans)
 61. **Redis adapter for Socket.io** (2026-02-17) - Enables multi-server horizontal scaling using Redis pub/sub
 62. **Cookie-based JWT over session-based** (2026-02-17) - Better for stateless horizontal scaling; reads accessToken from httpOnly cookies
 63. **Domain:action event naming** (2026-02-17) - Clear organization: lobby:join, room:create, match:start - lowercase with colon separator
+
+### frontend-integration-08 (Code Execution Engine)
+
+73. **Docker sandbox isolation** (2026-02-18) - Uses Docker with memory (256MB), CPU (0.5), pids (50) limits, read-only filesystem, no-new-privileges security option
+74. **Test case validation** (2026-02-18) - Runs 2 test cases, compares output with expected (trimmed whitespace), returns detailed results with pass/fail
+75. **Complexity analysis** (2026-02-18) - Heuristic analysis: loop counting for time complexity, array allocations for space complexity
+76. **Security validation** (2026-02-18) - Blocks dangerous patterns: eval, Function constructor, os/subprocess imports, exec/spawn at validation layer
 64. **Unauthenticated socket connections** (2026-02-17) - Allow public lobby viewing without login; auth only required for actions
 65. **Production socket configuration** (2026-02-17) - 60s ping timeout, 25s ping interval, 2min connection recovery, websocket+polling transports
 
@@ -348,7 +361,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed frontend-integration-06-PLAN.md (Room/CompetitionHistory/Match models)
-- **Commits**: 3 commits (Room model, CompetitionHistory model, Match model)
-- **Duration**: 5m
+- **Stopped At**: Completed frontend-integration-08-PLAN.md (Code Execution Engine)
+- **Commits**: 4 commits (Docker sandbox config, execution service, API endpoints, sandbox executor)
+- **Duration**: 10m
 - **Completed**: 2026-02-18
