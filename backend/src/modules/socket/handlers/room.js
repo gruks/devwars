@@ -28,6 +28,9 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
 
     const { name, mode, maxPlayers, isPrivate, difficulty, timer } = data;
 
+    // Log room creation attempt for debugging
+    logger.debug(`Creating room: ${name || 'unnamed'}, mode: ${mode || 'debug'}, by user: ${socket.user?.username}`);
+
     try {
       // Create room
       const room = await Room.create({
@@ -52,6 +55,7 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
         throw new Error('Room was not saved to database');
       }
 
+      logger.debug(`Room saved to MongoDB: ${room._id}, inviteCode: ${room.inviteCode}`);
       await room.populate('players.userId', 'username rating');
       
       logger.info(`Room created: ${room.name} (${room._id}) by ${socket.user.username}, isPrivate: ${room.isPrivate}, status: ${room.status}`);
@@ -81,6 +85,57 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
         callback(response);
       }
     } catch (error) {
+      // Handle unique constraint violation (duplicate inviteCode)
+      if (error.code === 11000) {
+        logger.error(`Duplicate inviteCode generated for room creation, retrying...`);
+        
+        try {
+          // Retry once with new inviteCode
+          const retryRoom = await Room.create({
+            name: name || `Room-${Date.now().toString(36).toUpperCase().slice(-6)}`,
+            mode: mode || 'debug',
+            maxPlayers: maxPlayers || 4,
+            isPrivate: isPrivate || false,
+            difficulty: difficulty || 'medium',
+            timer: timer || 15,
+            createdBy: socket.user.userId,
+            inviteCode: `Room-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 5)}`,
+            players: [{
+              userId: socket.user.userId,
+              username: socket.user.username,
+              isReady: true,
+              joinedAt: new Date()
+            }]
+          });
+          
+          await retryRoom.populate('players.userId', 'username rating');
+          
+          // Join socket to room
+          socket.join(`room:${retryRoom._id}`);
+          socketRooms.set(socket.id, retryRoom._id.toString());
+          
+          // Broadcast to lobby
+          io.to('lobby').emit(EVENTS.ROOM.CREATED, {
+            room: retryRoom.toObject(),
+            timestamp: new Date().toISOString()
+          });
+          
+          const response = {
+            success: true,
+            data: { room: retryRoom.toObject() },
+            timestamp: new Date().toISOString()
+          };
+          
+          if (typeof callback === 'function') {
+            callback(response);
+          }
+          return;
+        } catch (retryError) {
+          logger.error(`Failed to create room after retry: ${retryError.message}`);
+          // Fall through to error response
+        }
+      }
+      
       logger.error(`Error creating room: ${error.message}`);
       const response = {
         success: false,
