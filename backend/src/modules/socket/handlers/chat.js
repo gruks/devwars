@@ -4,8 +4,9 @@
 const { EVENTS } = require('../utils/events.js');
 const { asyncHandler } = require('../middleware/error.js');
 const { logger } = require('../../../utils/logger.js');
+const { Message } = require('../../rooms/room.model.js');
 
-// In-memory message cache per room (last 50 messages)
+// In-memory message cache per room (last 50 messages) - for real-time performance
 const roomMessages = new Map(); // roomId -> Array of messages
 
 const MAX_MESSAGES_PER_ROOM = 50;
@@ -55,16 +56,30 @@ const registerChatHandlers = (io, socket) => {
       timestamp: new Date().toISOString()
     };
 
-    // Store in cache
+    // Store in memory cache for real-time performance
     if (!roomMessages.has(roomId)) {
       roomMessages.set(roomId, []);
     }
     const messages = roomMessages.get(roomId);
     messages.push(chatMessage);
     
-    // Keep only last N messages
+    // Keep only last N messages in memory
     if (messages.length > MAX_MESSAGES_PER_ROOM) {
       messages.shift();
+    }
+
+    // Persist to MongoDB for durability
+    try {
+      await Message.create({
+        roomId,
+        userId: socket.user.userId,
+        username: socket.user.username,
+        content: message.trim(),
+        type
+      });
+    } catch (dbError) {
+      logger.error(`Failed to persist chat message to MongoDB: ${dbError.message}`);
+      // Don't fail the request - message already broadcasted
     }
 
     // Broadcast to room (including sender)
@@ -85,14 +100,47 @@ const registerChatHandlers = (io, socket) => {
    * Get recent chat history
    */
   socket.on('chat:history', asyncHandler(async (data, callback) => {
-    const { roomId } = data;
+    const { roomId, limit = 50 } = data;
     
-    const messages = roomMessages.get(roomId) || [];
+    if (!roomId) {
+      throw new Error('Room ID is required');
+    }
+
+    // Try to get from memory cache first
+    let cachedMessages = roomMessages.get(roomId) || [];
+    
+    // If cache is empty or has few messages, load from MongoDB
+    if (cachedMessages.length < 10) {
+      try {
+        const dbMessages = await Message.find({ roomId })
+          .sort({ createdAt: -1 })
+          .limit(parseInt(limit))
+          .lean();
+        
+        // Format messages from MongoDB
+        const formattedMessages = dbMessages.map(msg => ({
+          id: msg._id.toString(),
+          roomId: msg.roomId.toString(),
+          userId: msg.userId.toString(),
+          username: msg.username,
+          message: msg.content,
+          type: msg.type,
+          timestamp: msg.createdAt.toISOString()
+        })).reverse();
+
+        // Update cache with loaded messages
+        roomMessages.set(roomId, formattedMessages.slice(-MAX_MESSAGES_PER_ROOM));
+        cachedMessages = formattedMessages;
+      } catch (dbError) {
+        logger.error(`Failed to load chat history from MongoDB: ${dbError.message}`);
+        // Fall back to cached messages
+      }
+    }
     
     if (typeof callback === 'function') {
       callback({
         success: true,
-        data: { messages },
+        data: { messages: cachedMessages },
         timestamp: new Date().toISOString()
       });
     }
@@ -102,7 +150,7 @@ const registerChatHandlers = (io, socket) => {
    * Send system message to room
    * (Used internally by other handlers)
    */
-  socket.sendSystemMessage = (roomId, message) => {
+  socket.sendSystemMessage = async (roomId, message) => {
     const systemMessage = {
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       roomId,
@@ -121,6 +169,19 @@ const registerChatHandlers = (io, socket) => {
     
     if (messages.length > MAX_MESSAGES_PER_ROOM) {
       messages.shift();
+    }
+
+    // Persist to MongoDB
+    try {
+      await Message.create({
+        roomId,
+        userId: null, // System messages have no user
+        username: 'System',
+        content: message,
+        type: 'system'
+      });
+    } catch (dbError) {
+      logger.error(`Failed to persist system message to MongoDB: ${dbError.message}`);
     }
 
     io.to(`room:${roomId}`).emit(EVENTS.ROOM.CHAT_MESSAGE, systemMessage);

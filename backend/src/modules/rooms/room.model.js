@@ -344,4 +344,42 @@ roomSchema.index({ spectators: 1 });
 // Create the model
 const Room = mongoose.model('Room', roomSchema);
 
-module.exports = { Room, playerSchema, testCaseSchema, enhancedSubmissionSchema };
+/**
+ * Chat message schema for persistent chat storage
+ */
+const messageSchema = new mongoose.Schema({
+  roomId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Room',
+    required: true,
+    index: true
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  username: {
+    type: String,
+    required: true
+  },
+  content: {
+    type: String,
+    required: true,
+    maxlength: 500
+  },
+  type: {
+    type: String,
+    enum: ['text', 'system', 'action'],
+    default: 'text'
+  }
+}, { 
+  timestamps: true 
+});
+
+// Compound index for efficient querying by room and time
+messageSchema.index({ roomId: 1, createdAt: -1 });
+
+const Message = mongoose.model('Message', messageSchema);
+
+module.exports = { Room, Message, playerSchema, testCaseSchema, enhancedSubmissionSchema };
