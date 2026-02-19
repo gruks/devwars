@@ -31,12 +31,13 @@
 
 **Plans**:
 - [x] frontend-integration-01 — Connect frontend to backend auth
-- [ ] frontend-integration-06 — MongoDB schema updates (test cases, spectators, history)
-- [ ] frontend-integration-07 — WebSocket room broadcasting & sync fixes
-- [ ] frontend-integration-08 — Docker sandbox code execution
-- [ ] frontend-integration-09 — Room page UI with Monaco editor & test cases
-- [ ] frontend-integration-10 — ML winner prediction service
-- [ ] frontend-integration-11 — Result modal & private history page
+- [x] frontend-integration-06 — MongoDB schema updates (test cases, spectators, history)
+- [x] frontend-integration-07 — WebSocket room broadcasting & sync fixes
+- [x] frontend-integration-08 — Docker sandbox code execution
+- [x] frontend-integration-09 — Room page UI with Monaco editor & test cases
+- [x] frontend-integration-10 — ML winner prediction service
+- [x] frontend-integration-11 — Result modal & private history page
+- [ ] frontend-integration-12 — Gap closure: Room broadcast & History 404 fixes
 
 ---
 
