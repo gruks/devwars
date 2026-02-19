@@ -3,9 +3,9 @@
 ## Current Phase
 
 **Phase**: frontend-integration
-**Status**: In Progress - 5 of 7 plans complete
-**Current Plan**: frontend-integration-12 Gap Closure ✓ Complete
+**Status**: In Progress - 6 of 7 plans complete
 
+**Current Plan**: frontend-integration-13 ML Routes Registration ✓ Complete
 ## Phase Plans
 
 ### lobby-fix-01: Persistent Session Management ✓ Complete
@@ -148,6 +148,7 @@
 3. ~~frontend-integration-08 — Code Execution Engine~~ ✓ Complete
 4. ~~frontend-integration-09 — Room page with Monaco editor & test cases~~ ✓ Complete
 5. ~~frontend-integration-12 — Gap Closure (History 404, Socket Timing, MongoDB Errors, Reconnection)~~ ✓ Complete
+6. ~~frontend-integration-13 — ML Routes Registration~~ ✓ Complete
 
 **Description**: MongoDB schema updates for LeetCode-style competitive coding:
 - Room model with testCases array, spectators array, enhanced submissions with metrics
@@ -177,8 +178,7 @@
 
 ## What's Next
 
-Phase frontend-integration is now in progress with 5 of 7 plans complete.
-Ready for next plan: frontend-integration-10 (ML winner prediction)
+Phase frontend-integration is now 6 of 7 plans complete (one remaining plan).
 
 ## Progress
 
@@ -190,7 +190,7 @@ Phase 3: Game Engine      [██████████] 100% (5/5 plans)
 Phase 4: Code Execution   [██████████] 100% (2/2 plans)
 Phase 5: Stats & Ranking  [██████████] 100% (2/2 plans)
 Phase 06-realtime-sync    [██████████] 100% (3/3 plans) - Complete
-Phase frontend-integration [██████    ]  71% (5/7 plans)
+Phase frontend-integration [█████████ ]  86% (6/7 plans)
 Overall                   [████████   ]  86% (29/31 plans)
 ```
 
@@ -403,7 +403,7 @@ None currently.
 
 ## Last Session
 
-- **Stopped At**: Completed frontend-integration-12-PLAN.md (Gap Closure)
-- **Commits**: History API path fix, socket timing fix, MongoDB error handling, reconnection handler
-- **Duration**: 5 min
+- **Stopped At**: Completed frontend-integration-13-PLAN.md (ML Routes Registration)
+- **Commits**: ML routes registered in backend/src/routes.js
+- **Duration**: 1 min
 - **Completed**: 2026-02-19
