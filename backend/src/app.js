@@ -32,6 +32,7 @@ app.use(cors({
 
 // Cookie parsing middleware
 app.use(cookieParser());
+
 // Session middleware
 const sessionMiddleware = session({
   secret: env.SESSION_SECRET,
@@ -89,4 +90,5 @@ app.use(notFoundHandler);
 // Global error handler - must be last
 app.use(errorHandler);
 
+// Export app and sessionMiddleware for socket.io
 module.exports = { app, sessionMiddleware };

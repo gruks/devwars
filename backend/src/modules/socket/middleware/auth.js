@@ -1,35 +1,34 @@
 /**
  * Socket.io authentication middleware
- * Reads JWT from httpOnly cookies
+ * Reads session from httpOnly cookie
  */
 
-const jwt = require('jsonwebtoken');
-const cookie = require('cookie');
 const { User } = require('../../users/user.model.js');
-const { env } = require('../../../config/env.js');
 const { logger } = require('../../../utils/logger.js');
 
 /**
  * Socket authentication middleware
- * Extracts JWT from httpOnly cookie and attaches user to socket
- * Allows unauthenticated connections for public lobby viewing
+ * Extracts session from cookie and attaches user to socket
+ * Uses express-session for authentication
  */
 const socketAuthMiddleware = async (socket, next) => {
   try {
-    // Parse cookies from handshake headers
-    const cookies = cookie.parse(socket.handshake.headers.cookie || '');
-    const token = cookies.accessToken;
-
-    if (!token) {
+    // Session is available via socket.request.session
+    // Express-session stores session data on the request object
+    const session = socket.request.session;
+    
+    logger.debug(`[Socket Auth] Session exists: ${!!session}, userId: ${session?.userId}`);
+    
+    if (!session || !session.userId) {
       // Allow unauthenticated connections for public lobby
+      logger.debug(`[Socket Auth] No session or userId - allowing anonymous`);
       return next();
     }
 
-    // Verify JWT
-    const decoded = jwt.verify(token, env.JWT_SECRET);
-
-    // Find user
-    const user = await User.findById(decoded.userId);
+    // Find user by session userId
+    const user = await User.findById(session.userId);
+    
+    logger.debug(`[Socket Auth] Found user: ${user?.username}`);
 
     if (user && user.isActive !== false) {
       // Attach user to socket
@@ -44,17 +43,6 @@ const socketAuthMiddleware = async (socket, next) => {
 
     next();
   } catch (error) {
-    if (error.name === 'TokenExpiredError') {
-      logger.debug(`Token expired for socket ${socket.id}`);
-      // Let client handle re-auth, don't block connection
-      return next();
-    }
-
-    if (error.name === 'JsonWebTokenError') {
-      logger.debug(`Invalid token for socket ${socket.id}`);
-      return next();
-    }
-
     // Log unexpected errors but don't block connection
     logger.error('Socket auth error:', error);
     next();

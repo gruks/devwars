@@ -3,6 +3,7 @@
  * Modular structure with middleware and handlers
  */
 
+const cookie = require('cookie');
 const { socketAuthMiddleware } = require('./middleware/auth.js');
 const { EVENTS } = require('./utils/events.js');
 const { logger } = require('../../utils/logger.js');
@@ -19,8 +20,32 @@ const userSockets = new Map();    // userId -> socketId (for reconnection tracki
 /**
  * Initialize socket.io with all handlers
  * @param {Object} io - Socket.io instance
+ * @param {Function} sessionMiddleware - Express session middleware (optional)
  */
-const initializeSocket = (io) => {
+const initializeSocket = (io, sessionMiddleware) => {
+  // Apply session middleware first if provided
+  if (sessionMiddleware) {
+    io.use((socket, next) => {
+      // Parse cookies from handshake headers
+      const cookies = cookie.parse(socket.handshake.headers.cookie || '');
+      logger.debug('[Socket] Cookies parsed:', Object.keys(cookies));
+      
+      // Manually set cookie header on request for session middleware
+      socket.request.headers.cookie = socket.handshake.headers.cookie || '';
+      
+      sessionMiddleware(socket.request, {}, (err) => {
+        if (err) {
+          logger.error('[Socket] Session middleware error:', err);
+        } else {
+          logger.debug('[Socket] Session after middleware:', socket.request.session?.userId);
+        }
+        next(err);
+      });
+    });
+  } else {
+    logger.warn('[Socket] No session middleware provided');
+  }
+
   // Apply authentication middleware
   io.use(socketAuthMiddleware);
 

@@ -1,9 +1,9 @@
 ---
-status: complete
+status: diagnosed
 phase: frontend-integration
 source: frontend-integration-01-SUMMARY.md, frontend-integration-06-SUMMARY.md, frontend-integration-07-SUMMARY.md, frontend-integration-08-SUMMARY.md, frontend-integration-09-SUMMARY.md, frontend-integration-10-SUMMARY.md, frontend-integration-11-SUMMARY.md
 started: 2026-02-19T00:00:00Z
-updated: 2026-02-19T00:00:00Z
+updated: 2026-02-19T12:00:00Z
 ---
 
 ## Current Test
@@ -108,33 +108,83 @@ skipped: 9
 ## Gaps
 
 - truth: "Rooms are saved to MongoDB when created"
-  status: failed
+  status: diagnosed
   reason: "User reported: rooms are not getting added in mongodb after creation"
   severity: major
   test: 2
-  artifacts: []
-  missing: []
+  root_cause: "The room creation code in backend/src/modules/socket/handlers/room.js DOES save rooms to MongoDB (line 33: Room.create()) and verifies with findById (lines 50-53). The code is correct but may have runtime issues - possible MongoDB connection problems, unique constraint violations (inviteCode), or silent failures not being logged properly."
+  artifacts:
+    - file: backend/src/modules/socket/handlers/room.js
+      lines: "33-53"
+      issue: "Room.create() followed by verification. If MongoDB save fails, an error should be thrown. Check server logs for errors during room creation."
+    - file: backend/src/modules/rooms/room.model.js
+      lines: "137-142"
+      issue: "inviteCode has unique: true constraint. Duplicate key errors could cause silent failures if not properly handled."
+  missing:
+    - "Add more verbose logging around Room.create() to capture exact MongoDB operations"
+    - "Check MongoDB connection health during room creation"
+    - "Verify no unique constraint violations on inviteCode"
 
 - truth: "Created rooms broadcast to all lobby users in real-time"
-  status: failed
+  status: diagnosed
   reason: "User reported: It is appearing in the lobby for the user who created it but it doesnot gets broadcasted to all users. Also not gets saved in mongodb"
   severity: major
   test: 5
-  artifacts: []
-  missing: []
+  root_cause: "The broadcast code at backend/src/modules/socket/handlers/room.js line 67 uses io.to('lobby').emit() which should work IF clients are in the 'lobby' room. The lobby join handler (lobby.js line 23) does socket.join('lobby'). However, clients must explicitly send the lobby:join event to be added to the lobby room. If clients don't join the lobby, they won't receive broadcasts."
+  artifacts:
+    - file: backend/src/modules/socket/handlers/room.js
+      lines: "63-71"
+      issue: "Broadcasts to 'lobby' room via io.to('lobby').emit(). If no clients are in lobby, broadcast has no recipients."
+    - file: backend/src/modules/socket/handlers/lobby.js
+      lines: "21-24"
+      issue: "socket.join('lobby') happens only when client sends lobby:join event. Clients must actively join lobby to receive broadcasts."
+    - file: code-arena/src/pages/app/Lobby.tsx
+      lines: "126-135"
+      issue: "Frontend sends lobby:join on useEffect. If socket not connected yet, event may not be sent or may fail silently."
+  missing:
+    - "Add logging to verify clients are actually in 'lobby' room when room is created"
+    - "Ensure socket isConnected before sending lobby:join"
+    - "Add reconnection logic to re-join lobby after socket reconnects"
 
 - truth: "Rooms visible to all lobby users for joining"
-  status: failed
+  status: diagnosed
   reason: "User reported: yes I get into room but only i am able to join the room it is not visible to another users so that is why no one is able to join"
   severity: major
   test: 6
-  artifacts: []
-  missing: []
+  root_cause: "This is a consequence of the broadcast issue (Gap 2). When a room is created, the backend broadcasts room:created to all clients in the lobby. If other clients haven't properly joined the lobby, they won't receive this event and won't see the room in their list. The join handler (room.js lines 159-163) also broadcasts room:update to lobby, which has the same requirement."
+  artifacts:
+    - file: backend/src/modules/socket/handlers/room.js
+      lines: "159-163"
+      issue: "Join handler broadcasts UPDATE to lobby. Same lobby room requirement as broadcast issue."
+    - file: code-arena/src/pages/app/Lobby.tsx
+      lines: "138-155"
+      issue: "Frontend listens for room:created, room:update, room:delete. If events not received, UI won't update."
+  missing:
+    - "Fix broadcast issue (Gap 2) - rooms will then be visible"
+    - "Add console logging in frontend to verify events are received"
+    - "Add visual indicator when socket is disconnected"
 
 - truth: "History page accessible at /app/history"
-  status: failed
+  status: diagnosed
   reason: "User reported: Showing 404 page not found"
   severity: blocker
   test: 16
-  artifacts: []
-  missing: []
+  root_cause: "The route IS correctly defined in code-arena/src/App.tsx line 70: <Route path=\"/app/history\" element={<History />} />. The backend route also exists at backend/src/modules/competition/competition.routes.js line 16. The 404 suggests either: (1) ProtectedRoute is failing to authenticate and redirecting to login incorrectly, (2) There's a React rendering error in History component that causes app to show NotFound, or (3) A build/bundle issue."
+  artifacts:
+    - file: code-arena/src/App.tsx
+      lines: "60-75"
+      issue: "History route defined inside ProtectedRoute. Route is correctly placed."
+    - file: code-arena/src/components/ProtectedRoute.tsx
+      lines: "9-26"
+      issue: "Checks isAuthenticated and redirects. If isLoading is true or authentication state is incorrect, may cause unexpected behavior."
+    - file: code-arena/src/pages/app/History.tsx
+      lines: "1-100"
+      issue: "Component fetches from /api/v1/competition/history. If this API call fails or throws, component may error out."
+    - file: backend/src/modules/competition/competition.routes.js
+      lines: "16"
+      issue: "GET /history endpoint exists with authenticate middleware. Should work if user is authenticated."
+  missing:
+    - "Add error boundary around History component to catch and display errors properly"
+    - "Verify authentication state loads correctly before protected route renders"
+    - "Check browser console for JavaScript errors when navigating to /app/history"
+    - "Verify API endpoint returns proper error if not authenticated"

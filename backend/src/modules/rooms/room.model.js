@@ -247,18 +247,23 @@ roomSchema.methods.removePlayer = function(userId) {
     player.departedAt = new Date();
   }
   
+  const isHostLeaving = this.createdBy.toString() === userId.toString();
+  
   this.players = this.players.filter(p => p.userId.toString() !== userId.toString());
+  
+  // If host left, delete the room (close it)
+  if (isHostLeaving) {
+    logger.info(`Host left, deleting room: ${this._id}`);
+    return this.deleteOne();
+  }
   
   // If room is empty, delete it
   if (this.players.length === 0) {
     return this.deleteOne();
   }
   
-  // If host left, assign new host
-  if (this.createdBy.toString() === userId.toString() && this.players.length > 0) {
-    this.createdBy = this.players[0].userId;
-  }
-  
+  // If host left (but we handled that above), assign new host
+  // This is now unreachable since host leaving deletes the room
   return this.save();
 };
 

@@ -8,7 +8,7 @@ const { env } = require('./config/env.js');
 const { logger } = require('./utils/logger.js');
 const { connectDB, disconnectDB } = require('./config/db.js');
 const { connectRedis, disconnectRedis, setupRedisAdapter } = require('./config/redis.js');
-const { app } = require('./app.js');
+const { app, sessionMiddleware } = require('./app.js');
 const PORT = env.PORT;
 
 // Start server with database connection
@@ -51,8 +51,8 @@ const startServer = async () => {
     // Setup Redis adapter for multi-server scaling
     await setupRedisAdapter(io);
 
-    // Initialize socket handlers
-    initializeSocket(io);
+    // Initialize socket handlers with session middleware
+    initializeSocket(io, sessionMiddleware);
 
     return httpServer;
   } catch (error) {

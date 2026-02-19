@@ -157,15 +157,21 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
       throw new Error('Authentication required');
     }
 
-    const { roomId } = data;
+    const { roomId, inviteCode } = data;
 
-    logger.debug(`User ${socket.user.username} attempting to join room: ${roomId}`);
+    logger.debug(`User ${socket.user.username} attempting to join room. roomId: ${roomId}, inviteCode: ${inviteCode}`);
 
-    // Find room
-    const room = await Room.findById(roomId);
+    // Find room by _id OR inviteCode
+    let room = null;
+    if (roomId) {
+      room = await Room.findById(roomId);
+    } else if (inviteCode) {
+      room = await Room.findOne({ inviteCode: inviteCode.toUpperCase() });
+    }
+    
     if (!room) {
-      logger.error(`Room not found: ${roomId}`);
-      throw new Error('Room not found');
+      logger.error(`Room not found. roomId: ${roomId}, inviteCode: ${inviteCode}`);
+      throw new Error('Room not found. Please check the room ID or invite code.');
     }
 
     logger.debug(`Room found: ${room.name}, status: ${room.status}, isPrivate: ${room.isPrivate}, players: ${room.players.length}`);

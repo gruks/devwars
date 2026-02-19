@@ -697,6 +697,8 @@ const startGameMatch = async (req, res) => {
     const { id } = req.params;
     const userId = req.user?._id;
 
+    logger.debug(`startGameMatch called with roomId: ${id}, userId: ${userId}`);
+
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -705,6 +707,7 @@ const startGameMatch = async (req, res) => {
     }
 
     const room = await Room.findById(id);
+    logger.debug(`Room lookup result: ${room ? `Found: ${room.name}, status: ${room.status}, isPrivate: ${room.isPrivate}` : 'Not found'}`);
 
     if (!room) {
       return res.status(404).json({

@@ -6,7 +6,7 @@ const { Room } = require('../../modules/rooms/room.model.js');
 const { Match } = require('../../modules/matches/match.model.js');
 const { EVENTS } = require('../../modules/socket/utils/events.js');
 const { asyncHandler } = require('../../modules/socket/middleware/error.js');
-const { logger } = require('../../../utils/logger.js');
+const { logger } = require('../../utils/logger.js');
 
 // Track active timers per room
 const roomTimers = new Map(); // roomId -> { intervalId, startTime, duration }
