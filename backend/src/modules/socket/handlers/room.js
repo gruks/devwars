@@ -2,6 +2,7 @@
  * Room event handlers
  */
 const { Room } = require('../../rooms/room.model.js');
+const { Question } = require('../../questions/question.model.js');
 const { EVENTS } = require('../utils/events.js');
 const { asyncHandler } = require('../middleware/error.js');
 const { logger } = require('../../../utils/logger.js');
@@ -406,6 +407,16 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
       throw new Error('All players must be ready to start');
     }
 
+    // Select a random question
+    const questions = await Question.find({ difficulty: room.difficulty }).limit(10);
+    if (questions.length === 0) {
+      throw new Error('No questions available for this difficulty');
+    }
+    const question = questions[Math.floor(Math.random() * questions.length)];
+
+    // Calculate timer duration
+    const timerDuration = room.timer * 60;
+
     // Start the match
     await room.startMatch();
 
@@ -414,11 +425,22 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
       socket.sendSystemMessage(roomId, 'Match is starting!');
     }
 
-    // Broadcast to room
+    // Broadcast to room with question data
     io.to(`room:${room._id}`).emit(EVENTS.MATCH.STARTED, {
       roomId: room._id.toString(),
       matchId: room.currentMatchId,
       startedAt: room.matchStartedAt,
+      timerDuration,
+      timerEndTime: new Date(Date.now() + timerDuration * 1000).toISOString(),
+      question: {
+        id: question.id,
+        title: question.title,
+        description: question.description,
+        difficulty: question.difficulty,
+        constraints: question.constraints || [],
+        examples: question.examples || [],
+        starterCode: question.starterCode || ''
+      },
       timestamp: new Date().toISOString()
     });
 
