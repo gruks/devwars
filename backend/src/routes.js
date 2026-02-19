@@ -101,6 +101,15 @@ router.use('/evaluation', require('./modules/evaluation/evaluation.routes.js'));
 router.use('/matches', require('./modules/matches/match.routes.js'));
 
 /**
+ * Competition history routes
+ * GET /api/v1/competition/history - Get user's competition history (protected)
+ * GET /api/v1/competition/history/:id - Get specific competition (protected)
+ * POST /api/v1/competition/history - Create competition history (protected)
+ * GET /api/v1/competition/stats - Get user's stats (protected)
+ */
+router.use('/competition', require('./modules/competition/competition.routes.js'));
+
+/**
  * Stats routes
  * GET /api/v1/stats/dashboard - Get global platform statistics
  */
@@ -114,6 +123,13 @@ router.use('/stats', require('./modules/stats/stats.routes.js'));
  * POST /api/v1/execution/validate - Validate code for security (protected)
  */
 router.use('/execution', require('./modules/execution/execution.routes.js'));
+
+/**
+ * ML routes
+ * POST /api/v1/ml/predict-winner - Predict match winner (protected)
+ * GET /api/v1/ml/health - ML service health check
+ */
+router.use('/ml', require('./modules/ml/ml.routes.js'));
 
 /**
  * Future module routes:
