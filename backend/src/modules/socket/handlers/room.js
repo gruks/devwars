@@ -181,15 +181,33 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
 
     logger.debug(`Room found: ${room.name}, status: ${room.status}, isPrivate: ${room.isPrivate}, players: ${room.players.length}`);
 
-    // Check if can join
-    if (!room.canJoin()) {
-      throw new Error('Room is not available for joining');
-    }
-
-    // Check if already in room
+    // Check if already in room FIRST (handles React StrictMode double-mount)
     const isAlreadyInRoom = room.players.some(
       p => p.userId.toString() === socket.user.userId
     );
+    
+    if (isAlreadyInRoom) {
+      logger.info(`User ${socket.user.username} already in room ${room.name}, returning existing room data`);
+      // Just return success - they're already in the room
+      await room.populate('players.userId', 'username rating');
+      socket.join(`room:${room._id}`);
+      socketRooms.set(socket.id, room._id.toString());
+      
+      const response = {
+        success: true,
+        data: { room: room.toObject() },
+        timestamp: new Date().toISOString()
+      };
+      if (typeof callback === 'function') {
+        callback(response);
+      }
+      return;
+    }
+
+    // Check if can join (only for new players)
+    if (!room.canJoin()) {
+      throw new Error('Room is not available for joining');
+    }
 
     // Leave previous room if any
     const prevRoomId = socketRooms.get(socket.id);
@@ -197,10 +215,8 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
       await leaveRoomInternal(io, socket, prevRoomId);
     }
 
-    // Add player to room (if not already in)
-    if (!isAlreadyInRoom) {
-      await room.addPlayer(socket.user.userId, socket.user.username);
-    }
+    // Add player to room
+    await room.addPlayer(socket.user.userId, socket.user.username);
 
     await room.populate('players.userId', 'username rating');
 
@@ -210,17 +226,15 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
 
     logger.info(`Player ${socket.user.username} joined room ${room.name}`);
 
-    // Notify room (if new join)
-    if (!isAlreadyInRoom) {
-      socket.to(`room:${room._id}`).emit(EVENTS.ROOM.PLAYER_JOINED, {
-        roomId: room._id.toString(),
-        player: {
-          userId: socket.user.userId,
-          username: socket.user.username
-        },
-        timestamp: new Date().toISOString()
-      });
-    }
+    // Notify room of new player
+    socket.to(`room:${room._id}`).emit(EVENTS.ROOM.PLAYER_JOINED, {
+      roomId: room._id.toString(),
+      player: {
+        userId: socket.user.userId,
+        username: socket.user.username
+      },
+      timestamp: new Date().toISOString()
+    });
 
     // Broadcast room update to lobby
     io.to('lobby').emit(EVENTS.ROOM.UPDATE, {
