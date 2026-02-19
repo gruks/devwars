@@ -23,17 +23,18 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
   socket.on(EVENTS.ROOM.CREATE, asyncHandler(async (data, callback) => {
     // Require authentication
     if (!socket.user) {
+      logger.error('Room creation failed: User not authenticated');
       throw new Error('Authentication required');
     }
 
     const { name, mode, maxPlayers, isPrivate, difficulty, timer } = data;
 
     // Log room creation attempt for debugging
-    logger.debug(`Creating room: ${name || 'unnamed'}, mode: ${mode || 'debug'}, by user: ${socket.user?.username}`);
+    logger.info(`[ROOM CREATE] User: ${socket.user.username} (${socket.user.userId}), Name: ${name || 'unnamed'}, isPrivate: ${isPrivate}`);
 
     try {
       // Create room
-      const room = await Room.create({
+      const roomData = {
         name: name || `Room-${Date.now().toString(36).toUpperCase().slice(-6)}`,
         mode: mode || 'debug',
         maxPlayers: maxPlayers || 4,
@@ -47,7 +48,11 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
           isReady: true,
           joinedAt: new Date()
         }]
-      });
+      };
+      
+      logger.debug(`[ROOM CREATE] Creating room with data:`, JSON.stringify(roomData));
+      
+      const room = await Room.create(roomData);
 
       // Verify room was saved
       const savedRoom = await Room.findById(room._id);
