@@ -10,6 +10,29 @@ const { logger } = require('../../../utils/logger.js');
 const socketRooms = new Map(); // socketId -> roomId
 
 /**
+ * Format room data for client
+ * Ensures consistent player data structure (userId as string, not object)
+ */
+function formatRoomForClient(room) {
+  const roomObj = room.toObject ? room.toObject() : room;
+  
+  // Format players to ensure userId is always a string
+  if (roomObj.players) {
+    roomObj.players = roomObj.players.map(player => ({
+      ...player,
+      userId: player.userId?._id?.toString() || player.userId?.toString() || player.userId
+    }));
+  }
+  
+  // Ensure createdBy is a string
+  if (roomObj.createdBy) {
+    roomObj.createdBy = roomObj.createdBy._id?.toString() || roomObj.createdBy.toString();
+  }
+  
+  return roomObj;
+}
+
+/**
  * Register room event handlers
  * @param {Object} io - Socket.io instance
  * @param {Object} socket - Socket instance
@@ -74,7 +97,7 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
       const lobbyCount = lobbyRoom ? lobbyRoom.size : 0;
       logger.debug(`Broadcasting room:created to lobby (${lobbyCount} clients), room ID: ${room._id}, isPrivate: ${room.isPrivate}`);
       io.to('lobby').emit(EVENTS.ROOM.CREATED, {
-        room: room.toObject(),
+        room: formatRoomForClient(room),
         timestamp: new Date().toISOString()
       });
       logger.info(`Room ${room.name} created and broadcast to lobby`);
@@ -82,7 +105,7 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
       // Send response
       const response = {
         success: true,
-        data: { room: room.toObject() },
+        data: { room: formatRoomForClient(room) },
         timestamp: new Date().toISOString()
       };
 
@@ -121,13 +144,13 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
           
           // Broadcast to lobby
           io.to('lobby').emit(EVENTS.ROOM.CREATED, {
-            room: retryRoom.toObject(),
+            room: formatRoomForClient(retryRoom),
             timestamp: new Date().toISOString()
           });
           
           const response = {
             success: true,
-            data: { room: retryRoom.toObject() },
+            data: { room: formatRoomForClient(retryRoom) },
             timestamp: new Date().toISOString()
           };
           
@@ -195,7 +218,7 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
       
       const response = {
         success: true,
-        data: { room: room.toObject() },
+        data: { room: formatRoomForClient(room) },
         timestamp: new Date().toISOString()
       };
       if (typeof callback === 'function') {
@@ -238,13 +261,13 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
 
     // Broadcast room update to lobby
     io.to('lobby').emit(EVENTS.ROOM.UPDATE, {
-      room: room.toObject(),
+      room: formatRoomForClient(room),
       timestamp: new Date().toISOString()
     });
 
     const response = {
       success: true,
-      data: { room: room.toObject() },
+      data: { room: formatRoomForClient(room) },
       timestamp: new Date().toISOString()
     };
 
@@ -401,7 +424,7 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
 
     // Broadcast to lobby
     io.to('lobby').emit(EVENTS.ROOM.UPDATE, {
-      room: room.toObject(),
+      room: formatRoomForClient(room),
       timestamp: new Date().toISOString()
     });
 
@@ -409,7 +432,7 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
 
     const response = {
       success: true,
-      data: { room: room.toObject() },
+      data: { room: formatRoomForClient(room) },
       timestamp: new Date().toISOString()
     };
 
@@ -452,7 +475,7 @@ async function leaveRoomInternal(io, socket, roomId, isDisconnect = false) {
   if (updatedRoom) {
     await updatedRoom.populate('players.userId', 'username rating');
     io.to('lobby').emit(EVENTS.ROOM.UPDATE, {
-      room: updatedRoom.toObject(),
+      room: formatRoomForClient(updatedRoom),
       timestamp: new Date().toISOString()
     });
   } else {
