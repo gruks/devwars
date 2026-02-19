@@ -5,6 +5,7 @@
 
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
+const { logger } = require('../../../utils/logger.js');
 
 /**
  * Test case schema for LeetCode-style problems
