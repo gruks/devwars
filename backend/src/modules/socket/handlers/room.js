@@ -28,46 +28,68 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
 
     const { name, mode, maxPlayers, isPrivate, difficulty, timer } = data;
 
-    // Create room
-    const room = await Room.create({
-      name: name || `Room-${Date.now().toString(36).toUpperCase().slice(-6)}`,
-      mode: mode || 'debug',
-      maxPlayers: maxPlayers || 4,
-      isPrivate: isPrivate || false,
-      difficulty: difficulty || 'medium',
-      timer: timer || 15,
-      createdBy: socket.user.userId,
-      players: [{
-        userId: socket.user.userId,
-        username: socket.user.username,
-        isReady: true,
-        joinedAt: new Date()
-      }]
-    });
+    try {
+      // Create room
+      const room = await Room.create({
+        name: name || `Room-${Date.now().toString(36).toUpperCase().slice(-6)}`,
+        mode: mode || 'debug',
+        maxPlayers: maxPlayers || 4,
+        isPrivate: isPrivate || false,
+        difficulty: difficulty || 'medium',
+        timer: timer || 15,
+        createdBy: socket.user.userId,
+        players: [{
+          userId: socket.user.userId,
+          username: socket.user.username,
+          isReady: true,
+          joinedAt: new Date()
+        }]
+      });
 
-    await room.populate('players.userId', 'username rating');
+      // Verify room was saved
+      const savedRoom = await Room.findById(room._id);
+      if (!savedRoom) {
+        throw new Error('Room was not saved to database');
+      }
 
-    // Join socket to room
-    socket.join(`room:${room._id}`);
-    socketRooms.set(socket.id, room._id.toString());
+      await room.populate('players.userId', 'username rating');
+      
+      logger.info(`Room created: ${room.name} (${room._id}) by ${socket.user.username}, isPrivate: ${room.isPrivate}, status: ${room.status}`);
 
-    logger.info(`Room created: ${room.name} (${room._id}) by ${socket.user.username}`);
+      // Join socket to room
+      socket.join(`room:${room._id}`);
+      socketRooms.set(socket.id, room._id.toString());
 
-    // Broadcast to lobby
-    io.to('lobby').emit(EVENTS.ROOM.CREATED, {
-      room: room.toObject(),
-      timestamp: new Date().toISOString()
-    });
+      // Broadcast to lobby - include room count in lobby for debugging
+      const lobbyRoom = io.sockets.adapter.rooms.get('lobby');
+      const lobbyCount = lobbyRoom ? lobbyRoom.size : 0;
+      logger.debug(`Broadcasting room:created to lobby (${lobbyCount} clients), room ID: ${room._id}, isPrivate: ${room.isPrivate}`);
+      io.to('lobby').emit(EVENTS.ROOM.CREATED, {
+        room: room.toObject(),
+        timestamp: new Date().toISOString()
+      });
+      logger.info(`Room ${room.name} created and broadcast to lobby`);
 
-    // Send response
-    const response = {
-      success: true,
-      data: { room: room.toObject() },
-      timestamp: new Date().toISOString()
-    };
+      // Send response
+      const response = {
+        success: true,
+        data: { room: room.toObject() },
+        timestamp: new Date().toISOString()
+      };
 
-    if (typeof callback === 'function') {
-      callback(response);
+      if (typeof callback === 'function') {
+        callback(response);
+      }
+    } catch (error) {
+      logger.error(`Error creating room: ${error.message}`);
+      const response = {
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      };
+      if (typeof callback === 'function') {
+        callback(response);
+      }
     }
   }));
 
@@ -82,11 +104,16 @@ const registerRoomHandlers = (io, socket, connectedUsers) => {
 
     const { roomId } = data;
 
+    logger.debug(`User ${socket.user.username} attempting to join room: ${roomId}`);
+
     // Find room
     const room = await Room.findById(roomId);
     if (!room) {
+      logger.error(`Room not found: ${roomId}`);
       throw new Error('Room not found');
     }
+
+    logger.debug(`Room found: ${room.name}, status: ${room.status}, isPrivate: ${room.isPrivate}, players: ${room.players.length}`);
 
     // Check if can join
     if (!room.canJoin()) {
