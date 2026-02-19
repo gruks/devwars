@@ -180,6 +180,26 @@
 
 ---
 
+### Phase 06: Real-time Sync (Room Visibility & Polling)
+
+**Goal**: Fix room visibility issues, implement WebSocket broadcast fixes, add polling fallback for real-time competition
+
+**Duration**: 3 plans
+
+**Delivers**:
+- Room creation visible to all lobby users via WebSocket broadcast
+- Polling fallback when WebSocket fails
+- MongoDB room persistence verified
+- Connection status indicator in UI
+- Chat message persistence in MongoDB
+
+**Plans**:
+- [ ] 06-01 — Fix WebSocket broadcast for room visibility
+- [ ] 06-02 — Polling fallback and reconnection logic
+- [ ] 06-03 — MongoDB verification and chat persistence
+
+---
+
 ## Success Criteria
 
 ### MVP Complete When:
