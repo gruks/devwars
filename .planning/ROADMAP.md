@@ -41,6 +41,7 @@
 - [x] frontend-integration-11 — Result modal & private history page
 - [x] frontend-integration-12 — Gap closure: Room broadcast & History 404 fixes
 - [x] frontend-integration-13 — Gap closure: ML routes registration
+- [ ] frontend-integration-14 — Final production enhancements (Run Test, Submit, Spectator, Cleanup, History Sidebar)
 
 ---
 
