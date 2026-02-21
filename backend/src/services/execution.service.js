@@ -1,15 +1,14 @@
 /**
  * Execution Service
- * Wrapper for sandbox-service API to execute code in sandbox environment
+ * Executes code in sandbox environment using local Docker execution
  * Falls back to direct execution for JavaScript when sandbox is slow/unavailable
  */
 
-const axios = require('axios');
 const { logger } = require('../utils/logger.js');
 const vm = require('vm');
+const { executeInSandbox, getSupportedLanguages, SECURITY_CONFIG } = require('./sandbox.js');
 
-// Sandbox service configuration
-const SANDBOX_SERVICE_URL = process.env.SANDBOX_SERVICE_URL || 'http://localhost:3001';
+// Execution configuration
 const DEFAULT_TIMEOUT = 2000;
 const MAX_CODE_LENGTH = 10000;
 
@@ -165,7 +164,7 @@ const executeJavaScriptDirect = ({ code, input, timeout }) => {
 };
 
 /**
- * Execute with sandbox service
+ * Execute with local sandbox (Docker-based)
  */
 const executeWithSandbox = async ({ language, code, input, timeout }) => {
   // Map language to sandbox format
@@ -174,78 +173,29 @@ const executeWithSandbox = async ({ language, code, input, timeout }) => {
   logger.info({ 
     language: sandboxLanguage, 
     codeLength: code.length,
-    inputLength: input.length 
-  }, 'Executing code in sandbox');
+    inputLength: input?.length || 0 
+  }, 'Executing code in local sandbox');
 
   try {
-    // Submit job to sandbox service
-    const response = await axios.post(
-      `${SANDBOX_SERVICE_URL}/api/execute`,
-      {
-        language: sandboxLanguage,
-        code,
-        input,
-        timeout: Math.min(timeout, 5000)
-      },
-      {
-        timeout: 5000,
-        headers: { 'Content-Type': 'application/json' }
-      }
-    );
-
-    // If job was queued, poll for result
-    if (response.data.jobId) {
-      const jobId = response.data.jobId;
-      const maxAttempts = 10;
-      const pollInterval = 500;
-      
-      for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        await new Promise(resolve => setTimeout(resolve, pollInterval));
-        
-        try {
-          const jobResult = await axios.get(
-            `${SANDBOX_SERVICE_URL}/api/job/${jobId}`,
-            { timeout: 3000 }
-          );
-          
-          const status = jobResult.data.status;
-          if (status !== 'waiting' && status !== 'active' && status !== 'queued') {
-            logger.info({
-              status: jobResult.data.status,
-              runtime: jobResult.data.runtime,
-              memory: jobResult.data.memory
-            }, 'Code execution completed');
-            
-            return {
-              success: jobResult.data.status === 'success',
-              output: jobResult.data.stdout || '',
-              error: jobResult.data.stderr || '',
-              runtime: jobResult.data.runtime,
-              memory: jobResult.data.memory
-            };
-          }
-        } catch (pollError) {
-          logger.warn({ error: pollError.message }, 'Polling job status');
-        }
-      }
-      
-      return {
-        success: false,
-        output: '',
-        error: 'Execution timeout - job took too long',
-        runtime: `${timeout}ms`,
-        memory: '0mb'
-      };
-    }
-
-    // Direct result
-    const result = response.data;
+    const result = await executeInSandbox({
+      language: sandboxLanguage,
+      code,
+      input,
+      timeout: Math.min(timeout, 5000)
+    });
+    
+    logger.info({
+      success: result.success,
+      executionTime: result.executionTime,
+      memoryUsage: result.memoryUsage
+    }, 'Code execution completed');
+    
     return {
-      success: result.status === 'success',
-      output: result.stdout || '',
-      error: result.stderr || '',
-      runtime: result.runtime,
-      memory: result.memory
+      success: result.success,
+      output: result.output || '',
+      error: result.error || '',
+      runtime: result.executionTime,
+      memory: result.memoryUsage
     };
   } catch (error) {
     logger.error({ 
@@ -253,14 +203,6 @@ const executeWithSandbox = async ({ language, code, input, timeout }) => {
       language,
       codeLength: code?.length 
     }, 'Code execution failed');
-
-    if (error.code === 'ECONNREFUSED') {
-      throw new Error('Sandbox service unavailable');
-    }
-
-    if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
-      throw new Error('Execution timeout');
-    }
 
     throw error;
   }
