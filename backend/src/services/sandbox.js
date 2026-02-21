@@ -177,13 +177,12 @@ const buildDockerCommand = (tempDir, language, codeFile, timeout) => {
         '--memory-swap', SECURITY_CONFIG.memoryLimit,
         '--cpus', SECURITY_CONFIG.cpuLimit,
         '--pids-limit', String(SECURITY_CONFIG.pidsLimit),
-        '--read-only',
         '--security-opt', 'no-new-privileges:true',
         '-v', `${tempDir}:/sandbox:ro`,
         'devwars-sandbox',
         'timeout', `${Math.ceil(timeout / 1000)}s`,
         'bash', '-c',
-        `javac /sandbox/${path.basename(codeFile)} && java -Xmx256M -Xss256k -Djava.security.manager -Djava.policy=grant /sandbox/${config.mainClass}.class`
+        `cd /tmp && cp /sandbox/${path.basename(codeFile)} ${config.mainClass}.java && javac ${config.mainClass}.java && java -Xmx256M -Xss256k ${config.mainClass}`
       ];
     } else if (language === 'cpp' || language === 'c++') {
       runCommand = 'docker';
@@ -193,13 +192,12 @@ const buildDockerCommand = (tempDir, language, codeFile, timeout) => {
         '--memory-swap', SECURITY_CONFIG.memoryLimit,
         '--cpus', SECURITY_CONFIG.cpuLimit,
         '--pids-limit', String(SECURITY_CONFIG.pidsLimit),
-        '--read-only',
         '--security-opt', 'no-new-privileges:true',
         '-v', `${tempDir}:/sandbox:ro`,
         'devwars-sandbox',
         'timeout', `${Math.ceil(timeout / 1000)}s`,
         'bash', '-c',
-        `g++ -o /sandbox/${config.executable} /sandbox/${path.basename(codeFile)} && /sandbox/${config.executable}`
+        `cd /tmp && cp /sandbox/${path.basename(codeFile)} code.cpp && g++ -o a.out code.cpp && ./a.out`
       ];
     } else if (language === 'go') {
       runCommand = 'docker';
@@ -209,12 +207,12 @@ const buildDockerCommand = (tempDir, language, codeFile, timeout) => {
         '--memory-swap', SECURITY_CONFIG.memoryLimit,
         '--cpus', SECURITY_CONFIG.cpuLimit,
         '--pids-limit', String(SECURITY_CONFIG.pidsLimit),
-        '--read-only',
         '--security-opt', 'no-new-privileges:true',
         '-v', `${tempDir}:/sandbox:ro`,
         'devwars-sandbox',
         'timeout', `${Math.ceil(timeout / 1000)}s`,
-        'go', 'run', `/sandbox/${path.basename(codeFile)}`
+        'bash', '-c',
+        `cd /tmp && cp /sandbox/${path.basename(codeFile)} code.go && go run code.go`
       ];
     }
   } else {
