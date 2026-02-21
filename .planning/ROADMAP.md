@@ -207,6 +207,26 @@
 
 ---
 
+### Phase 07: Sandbox Integration (Single Port)
+
+**Goal**: Integrate sandbox-service directly into Node.js backend, eliminating the need for a separate service and enabling single-port deployment
+
+**Duration**: 2 plans
+
+**Status**: Planning
+
+**Delivers**:
+- Sandbox execution as backend module (not separate service)
+- Single port deployment (no port 3001 needed)
+- Docker isolation maintained for security
+- Simplified deployment and development workflow
+
+**Plans**:
+- [ ] 07-01 — Integrate sandbox module into backend
+- [ ] 07-02 — Environment cleanup and verification
+
+---
+
 ## Success Criteria
 
 ### MVP Complete When:
