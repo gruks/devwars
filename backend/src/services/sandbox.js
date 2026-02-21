@@ -181,7 +181,7 @@ const buildDockerCommand = (tempDir, language, codeFile, timeout) => {
         '--security-opt', 'no-new-privileges:true',
         '-v', `${tempDir}:/sandbox:ro`,
         'devwars-sandbox',
-        'timeout', String(Math.ceil(timeout / 1000)), 's',
+        'timeout', `${Math.ceil(timeout / 1000)}s`,
         'bash', '-c',
         `javac /sandbox/${path.basename(codeFile)} && java -Xmx256M -Xss256k -Djava.security.manager -Djava.policy=grant /sandbox/${config.mainClass}.class`
       ];
@@ -197,7 +197,7 @@ const buildDockerCommand = (tempDir, language, codeFile, timeout) => {
         '--security-opt', 'no-new-privileges:true',
         '-v', `${tempDir}:/sandbox:ro`,
         'devwars-sandbox',
-        'timeout', String(Math.ceil(timeout / 1000)), 's',
+        'timeout', `${Math.ceil(timeout / 1000)}s`,
         'bash', '-c',
         `g++ -o /sandbox/${config.executable} /sandbox/${path.basename(codeFile)} && /sandbox/${config.executable}`
       ];
@@ -213,7 +213,7 @@ const buildDockerCommand = (tempDir, language, codeFile, timeout) => {
         '--security-opt', 'no-new-privileges:true',
         '-v', `${tempDir}:/sandbox:ro`,
         'devwars-sandbox',
-        'timeout', String(Math.ceil(timeout / 1000)), 's',
+        'timeout', `${Math.ceil(timeout / 1000)}s`,
         'go', 'run', `/sandbox/${path.basename(codeFile)}`
       ];
     }
@@ -230,7 +230,7 @@ const buildDockerCommand = (tempDir, language, codeFile, timeout) => {
       '--security-opt', 'no-new-privileges:true',
       '-v', `${tempDir}:/sandbox:ro`,
       'devwars-sandbox',
-      'timeout', String(Math.ceil(timeout / 1000)), 's',
+      'timeout', `${Math.ceil(timeout / 1000)}s`,
       config.runCmd, `/sandbox/${path.basename(codeFile)}`
     ];
   }
