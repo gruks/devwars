@@ -50,7 +50,7 @@ const LANGUAGE_CONFIG = {
   go: {
     ext: 'go',
     runCmd: 'go',
-    compile: false,
+    compile: true,
     runArgs: ['run']
   },
   cpp: {
@@ -203,10 +203,10 @@ const buildDockerCommand = (tempDir, language, codeFile, timeout) => {
       runCommand = 'docker';
       runArgs = [
         'run', '--rm',
-        '--memory', SECURITY_CONFIG.memoryLimit,
-        '--memory-swap', SECURITY_CONFIG.memoryLimit,
-        '--cpus', SECURITY_CONFIG.cpuLimit,
-        '--pids-limit', String(SECURITY_CONFIG.pidsLimit),
+        '--memory', '512m',
+        '--memory-swap', '512m',
+        '--cpus', '1',
+        '--pids-limit', '128',
         '--security-opt', 'no-new-privileges:true',
         '-v', `${tempDir}:/sandbox:ro`,
         'devwars-sandbox',
