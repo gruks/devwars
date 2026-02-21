@@ -347,6 +347,91 @@ roomSchema.index({ createdAt: -1 });
 roomSchema.index({ 'players.userId': 1 });
 roomSchema.index({ spectators: 1 });
 
+// Index for cleanup queries
+roomSchema.index({ status: 1, createdAt: 1, 'players.departedAt': 1, 'players.lastActiveAt': 1 });
+
+// Virtual for room age in days
+roomSchema.virtual('ageInDays').get(function() {
+  const diffTime = Math.abs(new Date() - this.createdAt);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+});
+
+// Virtual for cleanup eligibility
+roomSchema.virtual('isEligibleForCleanup').get(function() {
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  
+  // Room is eligible if:
+  // - Status is 'finished'
+  // - Created more than 1 day ago
+  // - All players have departed (no active players)
+  // - All players inactive for at least 1 day
+  if (this.status !== 'finished') return false;
+  if (this.createdAt > oneDayAgo) return false;
+  
+  // Check if all players have departed and are inactive
+  const allPlayersDeparted = this.players.every(p => p.departedAt);
+  const allPlayersInactive = this.players.every(p => {
+    if (!p.lastActiveAt) return false;
+    const lastActiveTime = p.lastActiveAt.getTime();
+    const oneDayAgoTime = oneDayAgo.getTime();
+    return lastActiveTime < oneDayAgoTime;
+  });
+  
+  return allPlayersDeparted && allPlayersInactive;
+});
+
+// Static method for finding rooms eligible for cleanup
+roomSchema.statics.findRoomsEligibleForCleanup = async function() {
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  
+  try {
+    const eligibleRooms = await this.find({
+      status: 'finished',
+      createdAt: { $lt: oneDayAgo },
+      'players.departedAt': { $exists: true }, // All players have departed
+      'players.lastActiveAt': { $lt: oneDayAgo } // All players inactive for 1+ day
+    }).exec();
+    
+    return eligibleRooms;
+  } catch (error) {
+    throw new Error(`Error finding rooms for cleanup: ${error.message}`);
+  }
+};
+
+// Static method for bulk cleanup
+roomSchema.statics.cleanupOldRooms = async function() {
+  const eligibleRooms = await this.findRoomsEligibleForCleanup();
+  
+  if (eligibleRooms.length === 0) {
+    return { cleanedUp: 0, totalRooms: 0 };
+  }
+  
+  const cleanupPromises = eligibleRooms.map(room => room.deleteOne());
+  
+  try {
+    const results = await Promise.allSettled(cleanupPromises);
+    
+    const successfulCleanups = results.filter(r => r.status === 'fulfilled').length;
+    const failedCleanups = results.filter(r => r.status === 'rejected').length;
+    
+    return {
+      cleanedUp: successfulCleanups,
+      failed: failedCleanups,
+      totalRooms: eligibleRooms.length,
+      cleanedRoomIds: eligibleRooms.filter((_, index) => results[index].status === 'fulfilled')
+        .map(room => room._id)
+    };
+  } catch (error) {
+    throw new Error(`Error cleaning up old rooms: ${error.message}`);
+  }
+};
+
+// Pre-remove hook for cleanup logging
+roomSchema.post('remove', function(doc) {
+  logger.info(`Room ${doc._id} (${doc.name}) was removed from database`);
+});
+
 // Create the model
 const Room = mongoose.model('Room', roomSchema);
 

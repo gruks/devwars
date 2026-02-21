@@ -881,6 +881,99 @@ const getMatchResults = async (req, res) => {
   }
 };
 
+// In-memory cleanup status (in production, use Redis or DB)
+let cleanupStatus = {
+  lastCleanup: null,
+  nextCleanup: null,
+  roomsCleaned: 0,
+  roomsFailed: 0,
+  status: 'idle'
+};
+
+/**
+ * Get cleanup status
+ * GET /api/v1/lobby/rooms/cleanup/status
+ */
+const getCleanupStatus = async (req, res) => {
+  try {
+    // Calculate next cleanup (midnight)
+    const now = new Date();
+    const nextMidnight = new Date(now);
+    nextMidnight.setDate(nextMidnight.getDate() + 1);
+    nextMidnight.setHours(0, 0, 0, 0);
+
+    res.json({
+      success: true,
+      data: {
+        lastCleanup: cleanupStatus.lastCleanup,
+        nextCleanup: nextMidnight.toISOString(),
+        roomsCleaned: cleanupStatus.roomsCleaned,
+        roomsFailed: cleanupStatus.roomsFailed,
+        status: cleanupStatus.status
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch cleanup status',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Trigger manual cleanup
+ * POST /api/v1/lobby/rooms/cleanup
+ */
+const triggerCleanup = async (req, res) => {
+  try {
+    cleanupStatus.status = 'running';
+
+    // Find rooms eligible for cleanup
+    const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
+    const eligibleRooms = await Room.find({
+      status: 'finished',
+      updatedAt: { $lt: sixHoursAgo }
+    });
+
+    let cleaned = 0;
+    let failed = 0;
+
+    for (const room of eligibleRooms) {
+      try {
+        await room.deleteOne();
+        cleaned++;
+      } catch (err) {
+        failed++;
+      }
+    }
+
+    cleanupStatus = {
+      lastCleanup: new Date(),
+      nextCleanup: null,
+      roomsCleaned: cleaned,
+      roomsFailed: failed,
+      status: 'idle'
+    };
+
+    res.json({
+      success: true,
+      data: {
+        lastCleanup: cleanupStatus.lastCleanup,
+        roomsCleaned: cleaned,
+        roomsFailed: failed
+      }
+    });
+  } catch (error) {
+    cleanupStatus.status = 'idle';
+    res.status(500).json({
+      success: false,
+      message: 'Failed to trigger cleanup',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getRooms,
   createRoom,
@@ -891,5 +984,7 @@ module.exports = {
   startMatch,
   startGameMatch,
   endMatch,
-  getMatchResults
+  getMatchResults,
+  getCleanupStatus,
+  triggerCleanup
 };

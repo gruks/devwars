@@ -72,4 +72,18 @@ router.get('/rooms/:id/results', roomController.getMatchResults);
  */
 router.get('/stats', roomController.getLobbyStats);
 
+/**
+ * @route   GET /api/v1/lobby/rooms/cleanup/status
+ * @desc    Get room cleanup status
+ * @access  Public
+ */
+router.get('/rooms/cleanup/status', roomController.getCleanupStatus);
+
+/**
+ * @route   POST /api/v1/lobby/rooms/cleanup
+ * @desc    Manually trigger room cleanup (admin)
+ * @access  Private (admin)
+ */
+router.post('/rooms/cleanup', authenticate, roomController.triggerCleanup);
+
 module.exports = router;

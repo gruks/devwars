@@ -141,13 +141,13 @@ const questionSchema = new mongoose.Schema({
  * Pre-validate hook to generate id if not provided
  * Uses uuid format: q-xxxxx
  */
-questionSchema.pre('validate', async function(next) {
+questionSchema.pre('validate', async function() {
   if (!this.id) {
     // Generate short unique ID: q-xxxxx format
+    const { v4: uuidv4 } = require('uuid');
     const uuid = uuidv4();
     this.id = `q-${uuid.slice(0, 5)}`;
   }
-  next();
 });
 
 // Virtual for average solve time (placeholder for future implementation)
