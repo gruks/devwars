@@ -75,7 +75,7 @@ const LANGUAGE_CONFIG = {
 const createTempDir = () => {
   const tempDir = path.join(os.tmpdir(), `sandbox-${uuidv4()}`);
   fs.mkdirSync(tempDir, { recursive: true });
-  return tempDir};
+  return tempDir;
 };
 
 /**
