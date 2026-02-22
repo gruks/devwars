@@ -5,6 +5,7 @@
 
 const { Question } = require('./question.model.js');
 const { HTTP_STATUS } = require('../../utils/constants.js');
+const mongoose = require('mongoose');
 
 /**
  * Get questions with filtering and pagination
@@ -149,7 +150,7 @@ const createQuestion = async (req, res) => {
     }
 
     // Validate language
-    const validLanguages = ['python', 'javascript', 'java', 'go', 'cpp', 'csharp', 'ruby', 'rust'];
+    const validLanguages = ['python', 'javascript', 'java', 'cpp', 'csharp', 'ruby', 'rust'];
     if (!validLanguages.includes(language)) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
@@ -394,9 +395,400 @@ const seedQuestions = async (req, res) => {
   }
 };
 
+/**
+ * Get all test cases for a question (seeded + custom)
+ * GET /api/v1/questions/:questionId/test-cases
+ */
+const getTestCases = async (req, res) => {
+  try {
+    const { questionId } = req.params;
+    const userId = req.user?._id;
+
+    const question = await Question.findOne({ id: questionId })
+      .select('testcases customTestcases')
+      .lean();
+
+    if (!question) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        success: false,
+        message: 'Question not found'
+      });
+    }
+
+    // Separate seeded and custom test cases
+    const seededTestcases = question.testcases || [];
+    const customTestcases = (question.customTestcases || []).map(tc => ({
+      ...tc,
+      isCustom: true,
+      _id: tc._id.toString(),
+      canEdit: userId && tc.userId.toString() === userId.toString(),
+      canDelete: userId && tc.userId.toString() === userId.toString()
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        seeded: seededTestcases,
+        custom: customTestcases,
+        totalSeeded: seededTestcases.length,
+        totalCustom: customTestcases.length
+      }
+    });
+  } catch (error) {
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: 'Failed to fetch test cases',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Add custom test case to a question
+ * POST /api/v1/questions/:questionId/test-cases
+ */
+const addCustomTestcase = async (req, res) => {
+  try {
+    const { questionId } = req.params;
+    const { input, output, isHidden = false, description = '' } = req.body;
+
+    // Require authentication
+    if (!req.user || !req.user._id) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        success: false,
+        message: 'Authentication required to add custom test cases'
+      });
+    }
+
+    // Validate required fields
+    if (!input || input.trim() === '') {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        message: 'Test case input is required'
+      });
+    }
+
+    if (!output || output.trim() === '') {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        message: 'Test case output is required'
+      });
+    }
+
+    // Validate input/output length
+    if (input.length > 5000) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        message: 'Input cannot exceed 5000 characters'
+      });
+    }
+
+    if (output.length > 5000) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        message: 'Output cannot exceed 5000 characters'
+      });
+    }
+
+    if (description.length > 500) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        message: 'Description cannot exceed 500 characters'
+      });
+    }
+
+    const question = await Question.findOne({ id: questionId });
+
+    if (!question) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        success: false,
+        message: 'Question not found'
+      });
+    }
+
+    // Create custom test case
+    const customTestcase = {
+      userId: req.user._id,
+      input: input.trim(),
+      output: output.trim(),
+      isHidden: Boolean(isHidden),
+      description: description.trim()
+    };
+
+    // Add to customTestcases array
+    if (!question.customTestcases) {
+      question.customTestcases = [];
+    }
+    question.customTestcases.push(customTestcase);
+    await question.save();
+
+    // Return the newly created test case
+    const created = question.customTestcases[question.customTestcases.length - 1];
+
+    res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      message: 'Custom test case added successfully',
+      data: {
+        ...created.toObject(),
+        isCustom: true,
+        _id: created._id.toString(),
+        canEdit: true,
+        canDelete: true
+      }
+    });
+  } catch (error) {
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: 'Failed to add custom test case',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Update custom test case
+ * PUT /api/v1/questions/:questionId/test-cases/:testcaseId
+ */
+const updateCustomTestcase = async (req, res) => {
+  try {
+    const { questionId, testcaseId } = req.params;
+    const { input, output, isHidden, description } = req.body;
+
+    // Require authentication
+    if (!req.user || !req.user._id) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        success: false,
+        message: 'Authentication required to update custom test cases'
+      });
+    }
+
+    const question = await Question.findOne({ id: questionId });
+
+    if (!question) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        success: false,
+        message: 'Question not found'
+      });
+    }
+
+    // Find custom test case
+    const testcaseIndex = question.customTestcases.findIndex(
+      tc => tc._id.toString() === testcaseId
+    );
+
+    if (testcaseIndex === -1) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        success: false,
+        message: 'Custom test case not found'
+      });
+    }
+
+    // Verify ownership
+    const testcase = question.customTestcases[testcaseIndex];
+    if (testcase.userId.toString() !== req.user._id.toString()) {
+      return res.status(HTTP_STATUS.FORBIDDEN).json({
+        success: false,
+        message: 'You can only edit your own test cases'
+      });
+    }
+
+    // Validate and update fields
+    if (input !== undefined) {
+      if (input.trim() === '') {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+          success: false,
+          message: 'Test case input cannot be empty'
+        });
+      }
+      if (input.length > 5000) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+          success: false,
+          message: 'Input cannot exceed 5000 characters'
+        });
+      }
+      question.customTestcases[testcaseIndex].input = input.trim();
+    }
+
+    if (output !== undefined) {
+      if (output.trim() === '') {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+          success: false,
+          message: 'Test case output cannot be empty'
+        });
+      }
+      if (output.length > 5000) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+          success: false,
+          message: 'Output cannot exceed 5000 characters'
+        });
+      }
+      question.customTestcases[testcaseIndex].output = output.trim();
+    }
+
+    if (isHidden !== undefined) {
+      question.customTestcases[testcaseIndex].isHidden = Boolean(isHidden);
+    }
+
+    if (description !== undefined) {
+      if (description.length > 500) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+          success: false,
+          message: 'Description cannot exceed 500 characters'
+        });
+      }
+      question.customTestcases[testcaseIndex].description = description.trim();
+    }
+
+    await question.save();
+
+    res.json({
+      success: true,
+      message: 'Custom test case updated successfully',
+      data: {
+        ...question.customTestcases[testcaseIndex].toObject(),
+        isCustom: true,
+        _id: question.customTestcases[testcaseIndex]._id.toString(),
+        canEdit: true,
+        canDelete: true
+      }
+    });
+  } catch (error) {
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: 'Failed to update custom test case',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Delete custom test case
+ * DELETE /api/v1/questions/:questionId/test-cases/:testcaseId
+ */
+const deleteCustomTestcase = async (req, res) => {
+  try {
+    const { questionId, testcaseId } = req.params;
+
+    // Require authentication
+    if (!req.user || !req.user._id) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        success: false,
+        message: 'Authentication required to delete custom test cases'
+      });
+    }
+
+    const question = await Question.findOne({ id: questionId });
+
+    if (!question) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        success: false,
+        message: 'Question not found'
+      });
+    }
+
+    // Find custom test case
+    const testcaseIndex = question.customTestcases.findIndex(
+      tc => tc._id.toString() === testcaseId
+    );
+
+    if (testcaseIndex === -1) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        success: false,
+        message: 'Custom test case not found'
+      });
+    }
+
+    // Verify ownership
+    const testcase = question.customTestcases[testcaseIndex];
+    if (testcase.userId.toString() !== req.user._id.toString()) {
+      return res.status(HTTP_STATUS.FORBIDDEN).json({
+        success: false,
+        message: 'You can only delete your own test cases'
+      });
+    }
+
+    // Remove test case
+    question.customTestcases.splice(testcaseIndex, 1);
+    await question.save();
+
+    res.json({
+      success: true,
+      message: 'Custom test case deleted successfully'
+    });
+  } catch (error) {
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: 'Failed to delete custom test case',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Validate test case format
+ * POST /api/v1/test-cases/validate
+ */
+const validateTestcase = async (req, res) => {
+  try {
+    const { input, output } = req.body;
+
+    const errors = [];
+
+    // Validate input
+    if (!input || input.trim() === '') {
+      errors.push({ field: 'input', message: 'Input is required' });
+    } else if (input.length > 5000) {
+      errors.push({ field: 'input', message: 'Input cannot exceed 5000 characters' });
+    }
+
+    // Validate output
+    if (!output || output.trim() === '') {
+      errors.push({ field: 'output', message: 'Output is required' });
+    } else if (output.length > 5000) {
+      errors.push({ field: 'output', message: 'Output cannot exceed 5000 characters' });
+    }
+
+    // Try to parse as JSON to check validity (if it's meant to be JSON)
+    try {
+      if (input.trim()) {
+        JSON.parse(input.trim());
+      }
+    } catch (e) {
+      // Not JSON, that's okay for simple string inputs
+    }
+
+    try {
+      if (output.trim()) {
+        JSON.parse(output.trim());
+      }
+    } catch (e) {
+      // Not JSON, that's okay for simple string outputs
+    }
+
+    res.json({
+      success: true,
+      data: {
+        valid: errors.length === 0,
+        errors
+      }
+    });
+  } catch (error) {
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: 'Failed to validate test case',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getQuestions,
   getQuestionById,
   createQuestion,
-  seedQuestions
+  seedQuestions,
+  getTestCases,
+  addCustomTestcase,
+  updateCustomTestcase,
+  deleteCustomTestcase,
+  validateTestcase
 };

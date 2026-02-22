@@ -84,6 +84,12 @@ router.use('/lobby', require('./modules/rooms/room.routes.js'));
 router.use('/questions', require('./modules/questions/question.routes.js'));
 
 /**
+ * Test case routes
+ * POST /api/v1/test-cases/validate - Validate test case format
+ */
+router.use('/test-cases', require('./modules/testcases/testcase.routes.js'));
+
+/**
  * Evaluation routes
  * POST /api/v1/evaluation/evaluate - Evaluate code submission (protected)
  */

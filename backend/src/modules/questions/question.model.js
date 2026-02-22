@@ -7,6 +7,45 @@ const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
 
 /**
+ * Custom test case schema
+ * User-created test cases for practice and debugging
+ */
+const customTestcaseSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true
+  },
+  input: {
+    type: String,
+    required: [true, 'Test case input is required'],
+    trim: true,
+    maxlength: [5000, 'Input cannot exceed 5000 characters']
+  },
+  output: {
+    type: String,
+    required: [true, 'Test case output is required'],
+    trim: true,
+    maxlength: [5000, 'Output cannot exceed 5000 characters']
+  },
+  isHidden: {
+    type: Boolean,
+    default: false
+  },
+  description: {
+    type: String,
+    trim: true,
+    maxlength: [500, 'Description cannot exceed 500 characters'],
+    default: ''
+  }
+}, {
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+/**
  * Test case schema
  * Defines input/output pairs for testing solutions
  */
@@ -62,7 +101,7 @@ const questionSchema = new mongoose.Schema({
   },
   language: {
     type: String,
-    enum: ['python', 'javascript', 'java', 'go', 'cpp', 'csharp', 'ruby', 'rust'],
+    enum: ['python', 'javascript', 'java', 'cpp', 'csharp', 'ruby', 'rust'],
     required: [true, 'Programming language is required'],
     index: true
   },
@@ -90,6 +129,11 @@ const questionSchema = new mongoose.Schema({
       },
       message: 'At least one test case is required'
     }
+  },
+  // Custom test cases created by users for practice
+  customTestcases: {
+    type: [customTestcaseSchema],
+    default: []
   },
   hints: {
     type: [String],
@@ -160,8 +204,10 @@ questionSchema.virtual('averageSolveTime').get(function() {
 questionSchema.index({ mode: 1, difficulty: 1, language: 1, isActive: 1 });
 questionSchema.index({ difficulty: 1, language: 1 });
 questionSchema.index({ tags: 1 });
+// Index for custom test cases by user and question
+questionSchema.index({ 'customTestcases.userId': 1, 'customTestcases.createdAt': -1 });
 
 // Create the model
 const Question = mongoose.model('Question', questionSchema);
 
-module.exports = { Question, testcaseSchema };
+module.exports = { Question, testcaseSchema, customTestcaseSchema };

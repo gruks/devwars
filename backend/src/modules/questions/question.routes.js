@@ -8,7 +8,12 @@ const {
   getQuestions,
   getQuestionById,
   createQuestion,
-  seedQuestions
+  seedQuestions,
+  getTestCases,
+  addCustomTestcase,
+  updateCustomTestcase,
+  deleteCustomTestcase,
+  validateTestcase
 } = require('./question.controller.js');
 
 // Import auth middleware
@@ -46,5 +51,53 @@ router.post('/', authenticate, authorize('admin'), createQuestion);
  * @access  Private (Admin only)
  */
 router.post('/seed', authenticate, authorize('admin'), seedQuestions);
+
+/**
+ * Custom test case routes
+ * /api/v1/questions/:questionId/test-cases
+ */
+
+/**
+ * @route   GET /api/v1/questions/:questionId/test-cases
+ * @desc    Get all test cases (seeded + custom) for a question
+ * @access  Public
+ */
+router.get('/:questionId/test-cases', getTestCases);
+
+/**
+ * @route   POST /api/v1/questions/:questionId/test-cases
+ * @desc    Add custom test case to a question
+ * @access  Private
+ * @body    input, output, isHidden, description
+ */
+router.post('/:questionId/test-cases', authenticate, addCustomTestcase);
+
+/**
+ * @route   PUT /api/v1/questions/:questionId/test-cases/:testcaseId
+ * @desc    Update custom test case
+ * @access  Private (owner only)
+ * @body    input, output, isHidden, description
+ */
+router.put('/:questionId/test-cases/:testcaseId', authenticate, updateCustomTestcase);
+
+/**
+ * @route   DELETE /api/v1/questions/:questionId/test-cases/:testcaseId
+ * @desc    Delete custom test case
+ * @access  Private (owner only)
+ */
+router.delete('/:questionId/test-cases/:testcaseId', authenticate, deleteCustomTestcase);
+
+/**
+ * Test case validation route
+ * /api/v1/test-cases/validate
+ */
+
+/**
+ * @route   POST /api/v1/test-cases/validate
+ * @desc    Validate test case format
+ * @access  Public
+ * @body    input, output
+ */
+router.post('/validate', validateTestcase);
 
 module.exports = router;
