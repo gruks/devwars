@@ -4,7 +4,7 @@
  */
 
 const express = require('express');
-const { validateTestcase } = require('../modules/questions/question.controller.js');
+const { validateTestcase } = require('../questions/question.controller.js');
 
 const router = express.Router();
 
