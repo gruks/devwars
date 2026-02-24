@@ -476,8 +476,17 @@ async function leaveRoomInternal(io, socket, roomId, isDisconnect = false) {
   const userId = socket.user?.userId;
   if (!userId) return;
 
-  // Remove player from room
-  await room.removePlayer(userId);
+  // Remove player from room (with error handling for race conditions)
+  try {
+    await room.removePlayer(userId);
+  } catch (error) {
+    // Handle race condition where room was already deleted
+    if (error.name === 'VersionError' || error.message.includes('No matching document')) {
+      logger.debug(`Room ${roomId} already deleted during player removal, ignoring`);
+      return;
+    }
+    throw error;
+  }
 
   // Notify room
   io.to(`room:${roomId}`).emit(EVENTS.ROOM.PLAYER_LEFT, {

@@ -241,31 +241,46 @@ roomSchema.methods.addPlayer = function(userId, username) {
 };
 
 // Remove player from room
-roomSchema.methods.removePlayer = function(userId) {
-  // Log departure timestamp for the leaving player
-  const player = this.players.find(p => p.userId.toString() === userId.toString());
-  if (player) {
-    player.departedAt = new Date();
+roomSchema.methods.removePlayer = async function(userId) {
+  try {
+    // Check if this document still exists in database
+    const exists = await this.constructor.exists({ _id: this._id });
+    if (!exists) {
+      logger.debug(`Room ${this._id} already deleted, skipping removePlayer`);
+      return;
+    }
+    
+    // Log departure timestamp for the leaving player
+    const player = this.players.find(p => p.userId.toString() === userId.toString());
+    if (player) {
+      player.departedAt = new Date();
+    }
+    
+    const isHostLeaving = this.createdBy.toString() === userId.toString();
+    
+    this.players = this.players.filter(p => p.userId.toString() !== userId.toString());
+    
+    // If host left, delete the room (close it)
+    if (isHostLeaving) {
+      logger.info(`Host left, deleting room: ${this._id}`);
+      return this.deleteOne();
+    }
+    
+    // If room is empty, delete it
+    if (this.players.length === 0) {
+      return this.deleteOne();
+    }
+  
+    // Save updated players list
+    return this.save();
+  } catch (error) {
+    // Handle race condition where room was already deleted
+    if (error.name === 'VersionError' || error.message.includes('No matching document')) {
+      logger.debug(`Room ${this._id} already deleted during removePlayer`);
+      return;
+    }
+    throw error;
   }
-  
-  const isHostLeaving = this.createdBy.toString() === userId.toString();
-  
-  this.players = this.players.filter(p => p.userId.toString() !== userId.toString());
-  
-  // If host left, delete the room (close it)
-  if (isHostLeaving) {
-    logger.info(`Host left, deleting room: ${this._id}`);
-    return this.deleteOne();
-  }
-  
-  // If room is empty, delete it
-  if (this.players.length === 0) {
-    return this.deleteOne();
-  }
-  
-  // If host left (but we handled that above), assign new host
-  // This is now unreachable since host leaving deletes the room
-  return this.save();
 };
 
 // Update player activity timestamp
@@ -448,7 +463,8 @@ const messageSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: false,
+    default: null
   },
   username: {
     type: String,
