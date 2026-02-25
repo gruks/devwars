@@ -541,18 +541,57 @@ const startMatch = async (req, res) => {
     
     // Start the match using model method
     await room.startMatch();
+    
+    // Get or create question for the match
+    const questions = await Question.find({
+      mode: 'debug',
+      difficulty: room.difficulty,
+      isActive: true
+    });
+    if (questions.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No questions available for this difficulty'
+      });
+    }
+    const question = questions[Math.floor(Math.random() * questions.length)];
+    
+    // Create match using match service
+    const match = await matchService.createMatch({
+      roomId: id,
+      questionId: question._id,
+      timerDuration: room.timer
+    });
+    
+    // Start the match
+    await matchService.startMatch(match._id);
+    
     await room.populate('createdBy', 'username');
     await room.populate('players.userId', 'username');
+    
+    // Prepare response data matching frontend expectations
+    const responseData = {
+      matchId: match._id,
+      question: {
+        id: question.id,
+        title: question.title,
+        description: question.description,
+        difficulty: question.difficulty,
+        starterCode: question.starterCode,
+        testcases: question.testcases.map(tc => ({
+          input: tc.input,
+          output: tc.output
+        }))
+      },
+      timerDuration: room.timer,
+      timerEndTime: new Date(Date.now() + room.timer * 1000).toISOString()
+    };
     
     // Broadcast to all players via socket (if socket service available)
     if (req.io) {
       req.io.to(`room:${id}`).emit('MATCH_STARTED', {
         type: 'MATCH_STARTED',
-        data: {
-          roomId: id,
-          startedAt: room.startedAt,
-          players: room.players
-        }
+        data: responseData
       });
       req.io.to('lobby').emit('ROOM_UPDATED', { room });
     }
@@ -560,7 +599,7 @@ const startMatch = async (req, res) => {
     res.json({
       success: true,
       message: 'Match started successfully',
-      data: room
+      data: responseData
     });
   } catch (error) {
     res.status(500).json({
