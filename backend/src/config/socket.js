@@ -5,6 +5,8 @@
 
 const { User } = require('../modules/users/user.model.js');
 const { Room } = require('../modules/rooms/room.model.js');
+const { Question } = require('../modules/questions/question.model.js');
+const matchService = require('../modules/matches/match.service.js');
 const { registerGameHandlers } = require('../socket/handlers/game.handler.js');
 
 // Store connected users: Map<socketId, { userId, username }>
@@ -228,12 +230,52 @@ const initializeSocket = (io, sessionMiddleware) => {
           return callback?.({ success: false, error: 'Need at least 2 players' });
         }
 
+        // Start room match
         await room.startMatch();
-
-        io.to(`room:${room._id}`).emit('MATCH_STARTED', { roomId: room._id });
+        
+        // Get or create question for the match
+        const questions = await Question.find({
+          mode: 'debug',
+          difficulty: room.difficulty,
+          isActive: true
+        });
+        if (questions.length === 0) {
+          return callback?.({ success: false, error: 'No questions available' });
+        }
+        const question = questions[Math.floor(Math.random() * questions.length)];
+        
+        // Create match
+        const match = await matchService.createMatch({
+          roomId: room._id.toString(),
+          questionId: question._id,
+          timerDuration: room.timer
+        });
+        
+        // Start the match
+        await matchService.startMatch(match._id);
+        
+        // Calculate timer end time
+        const timerEndTime = new Date(Date.now() + room.timer * 1000).toISOString();
+        
+        // Broadcast MATCH_STARTED with matchId and question
+        io.to(`room:${room._id}`).emit('MATCH_STARTED', { 
+          roomId: room._id,
+          matchId: match._id,
+          question: {
+            id: question.id,
+            title: question.title,
+            description: question.description,
+            difficulty: question.difficulty,
+            starterCode: question.starterCode,
+            testcases: question.testcases?.map(tc => ({ input: tc.input, output: tc.output })) || []
+          },
+          timerDuration: room.timer,
+          timerEndTime
+        });
+        
         io.to('lobby').emit('ROOM_UPDATED', { room });
 
-        callback?.({ success: true, room });
+        callback?.({ success: true, room, matchId: match._id });
       } catch (error) {
         callback?.({ success: false, error: error.message });
       }
