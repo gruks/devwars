@@ -589,10 +589,7 @@ const startMatch = async (req, res) => {
     
     // Broadcast to all players via socket (if socket service available)
     if (req.io) {
-      req.io.to(`room:${id}`).emit('MATCH_STARTED', {
-        type: 'MATCH_STARTED',
-        data: responseData
-      });
+      req.io.to(`room:${id}`).emit('match:started', responseData);
       req.io.to('lobby').emit('ROOM_UPDATED', { room });
     }
     

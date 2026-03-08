@@ -257,8 +257,8 @@ const initializeSocket = (io, sessionMiddleware) => {
         // Calculate timer end time
         const timerEndTime = new Date(Date.now() + room.timer * 1000).toISOString();
         
-        // Broadcast MATCH_STARTED with matchId and question
-        io.to(`room:${room._id}`).emit('MATCH_STARTED', { 
+        // Broadcast match:started with matchId and question (use lowercase:match format)
+        io.to(`room:${room._id}`).emit('match:started', { 
           roomId: room._id,
           matchId: match._id,
           question: {
