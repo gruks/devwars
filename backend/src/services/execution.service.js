@@ -21,14 +21,13 @@ const LANGUAGE_MAP = {
   node: 'javascript',
   javascript: 'javascript',
   java: 'java',
-  go: 'go',
   cpp: 'cpp'
 };
 
 /**
  * Supported languages
  */
-const SUPPORTED_LANGUAGES = ['javascript', 'python', 'java', 'go', 'cpp'];
+const SUPPORTED_LANGUAGES = ['javascript', 'python', 'java', 'cpp'];
 
 /**
  * Execute code in sandbox environment
@@ -92,15 +91,50 @@ const executeCode = async ({ language, code, input = '', timeout = DEFAULT_TIMEO
 };
 
 /**
+ * Parse test case input in named parameter format
+ * Examples:
+ *   "nums = [2,7,11,15]\ntarget = 9" -> { nums: [2,7,11,15], target: 9 }
+ *   "arr = [1,2,3]" -> { arr: [1,2,3] }
+ *   "x = 5\ny = 10" -> { x: 5, y: 10 }
+ */
+const parseNamedInput = (input) => {
+  const params = {};
+  const lines = input.split('\n').filter(l => l.trim());
+
+  for (const line of lines) {
+    // Match patterns like "nums = [2,7,11,15]" or "target = 9"
+    const match = line.match(/^(\w+)\s*=\s*(.+)$/);
+    if (match) {
+      const [, name, valueStr] = match;
+      const trimmed = valueStr.trim();
+      try {
+        // Try to parse as JSON (handles arrays, numbers, strings, objects)
+        params[name] = JSON.parse(trimmed);
+      } catch (e) {
+        // If not valid JSON, use as string
+        params[name] = trimmed;
+      }
+    }
+  }
+
+  return params;
+};
+
+/**
  * Execute JavaScript code directly using Node's VM (for faster testing)
  */
 const executeJavaScriptDirect = ({ code, input, timeout }) => {
   const startTime = Date.now();
-  
+
   // Capture console.log output
   let output = '';
   const logs = [];
-  
+
+  // Parse input into named parameters
+  const namedParams = parseNamedInput(input);
+  const paramNames = Object.keys(namedParams);
+  const paramValues = Object.values(namedParams);
+
   // Create a sandbox context
   const sandbox = {
     console: {
@@ -115,36 +149,52 @@ const executeJavaScriptDirect = ({ code, input, timeout }) => {
     setInterval: () => { throw new Error('setInterval is not allowed'); },
     require: () => { throw new Error('require is not allowed'); },
     process: undefined,
-    global: undefined,
-    input: input
+    global: undefined
   };
-  
-  // Parse input and make it available
-  const inputLines = input.split('\n').filter(l => l.trim());
-  sandbox.inputLines = inputLines;
-  sandbox.readLine = inputLines.shift || '';
-  
+
   try {
-    // Wrap code to handle async/await if present
-    let wrappedCode = code;
-    if (!code.includes('await ') && !code.includes('async ')) {
+    // Check if code defines a 'solution' function
+    const hasSolutionFunction = /function\s+solution\s*\(|const\s+solution\s*=|let\s+solution\s*=|var\s+solution\s*=/.test(code);
+
+    let wrappedCode;
+    if (hasSolutionFunction && paramNames.length > 0) {
+      // Call solution with parsed named parameters in order
+      wrappedCode = `
+        ${code}
+        ;
+        (function() {
+          const result = solution(${paramValues.map(v => JSON.stringify(v)).join(', ')});
+          if (result !== undefined) console.log(JSON.stringify(result));
+        })();
+      `;
+    } else if (hasSolutionFunction) {
+      // No parameters parsed, just call solution()
+      wrappedCode = `
+        ${code}
+        ;
+        (function() {
+          const result = solution();
+          if (result !== undefined) console.log(JSON.stringify(result));
+        })();
+      `;
+    } else if (!code.includes('await ') && !code.includes('async ')) {
       wrappedCode = `(function() { ${code} })()`;
     } else {
       wrappedCode = `(async function() { ${code} })()`;
     }
-    
+
     const script = new vm.Script(wrappedCode, { timeout: timeout || 5000 });
     const context = vm.createContext(sandbox);
-    
+
     let result = script.runInContext(context, { timeout: timeout || 5000 });
-    
+
     // If there's a return value, add it to output
     if (result !== undefined && result !== null) {
       logs.push(String(result));
     }
-    
+
     output = logs.join('\n');
-    
+
     return {
       success: true,
       output: output,

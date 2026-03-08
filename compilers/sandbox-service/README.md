@@ -19,7 +19,7 @@ Used for:
 ## ✨ Features
 
 ✅ **Secure Execution**: Isolated Docker containers with no network access  
-✅ **Multi-Language**: Python, JavaScript, C++, Java, Go  
+✅ **Multi-Language**: Python, JavaScript, C++, Java  
 ✅ **Resource Limits**: CPU (0.5 core), Memory (128MB), Timeout (2s)  
 ✅ **Queue System**: Redis + BullMQ for scalable job processing  
 ✅ **Auto Cleanup**: Automatic container destruction after execution  
@@ -55,7 +55,6 @@ Used for:
     /node-runner
     /cpp-runner
     /java-runner
-    /go-runner
   docker-compose.yml
   Dockerfile
   server.js
@@ -87,12 +86,11 @@ chmod +x build-runners.sh
 ./build-runners.sh
 ```
 
-This builds 5 security-hardened Docker images:
+This builds 4 security-hardened Docker images:
 - `sandbox-python-runner:latest`
 - `sandbox-node-runner:latest`
 - `sandbox-cpp-runner:latest`
 - `sandbox-java-runner:latest`
-- `sandbox-go-runner:latest`
 
 ### 3. Start Services
 
@@ -179,8 +177,8 @@ curl http://localhost:3000/health
 **Response:**
 ```json
 {
-  "supported": ["python", "javascript", "cpp", "java", "go"],
-  "count": 5
+  "supported": ["python", "javascript", "cpp", "java"],
+  "count": 4
 }
 ```
 
@@ -295,14 +293,6 @@ LOG_LEVEL=info
 {
   "language": "java",
   "code": "public class Main { public static void main(String[] args) { System.out.println(\"Hello\"); } }"
-}
-```
-
-### Go
-```json
-{
-  "language": "go",
-  "code": "package main\nimport \"fmt\"\nfunc main() { fmt.Println(\"Hello\") }"
 }
 ```
 
@@ -473,7 +463,6 @@ redis-cli -h localhost -p 6379 ping
 | JavaScript | 95ms | 24MB |
 | C++ | 450ms (compile + run) | 12MB |
 | Java | 850ms (compile + run) | 35MB |
-| Go | 380ms (compile + run) | 8MB |
 
 ### Scaling
 

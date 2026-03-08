@@ -12,7 +12,7 @@ const { AppError } = require('../../utils/helpers.js');
 const { logger } = require('../../utils/logger.js');
 
 const MAX_CODE_LENGTH = 10000;
-const SUPPORTED_LANGUAGES = ['javascript', 'python', 'java', 'go', 'cpp'];
+const SUPPORTED_LANGUAGES = ['javascript', 'python', 'java', 'cpp'];
 
 /**
  * Validate execution request

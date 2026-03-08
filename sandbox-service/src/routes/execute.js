@@ -14,9 +14,8 @@ const SUPPORTED_LANGUAGES = {
   python: { ext: 'py', cmd: 'python3' },
   python3: { ext: 'py', cmd: 'python3' },
   java: { ext: 'java', cmd: 'javac' },
-  go: { ext: 'go', cmd: 'go' },
   cpp: { ext: 'cpp', cmd: 'g++' },
-  c++: { ext: 'cpp', cmd: 'g++' }
+  'c++': { ext: 'cpp', cmd: 'g++' }
 };
 
 /**

@@ -37,7 +37,7 @@ export const LANGUAGE_CONFIGS = {
   cpp: {
     image: RUNNER_IMAGES.cpp,
     command: ['/bin/sh', '-c'],
-    compile: 'g++ -o /tmp/program /tmp/code.cpp && /tmp/program',
+    compile: 'g++ -o /tmp/program /tmp/code.cpp && chmod 777 /tmp/program && /tmp/program',
     fileExtension: '.cpp'
   },
   java: {
@@ -49,7 +49,7 @@ export const LANGUAGE_CONFIGS = {
   go: {
     image: RUNNER_IMAGES.go,
     command: ['/bin/sh', '-c'],
-    compile: 'go run /tmp/code.go',
+    compile: 'go run /tmp/main.go',
     fileExtension: '.go'
   }
 };

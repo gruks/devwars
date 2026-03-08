@@ -4,14 +4,28 @@ import { config } from '../config/config.js';
  * Get resource limits for container execution
  * @returns {Object} Docker resource limit configuration
  */
+function parseMemoryToBytes(memStr) {
+  if (!memStr) return 128 * 1024 * 1024;
+  const match = memStr.match(/^(\d+)([kmg]?)$/i);
+  if (!match) return 128 * 1024 * 1024;
+  const value = parseInt(match[1]);
+  const unit = match[2].toLowerCase();
+  switch (unit) {
+    case 'k': return value * 1024;
+    case 'm': return value * 1024 * 1024;
+    case 'g': return value * 1024 * 1024 * 1024;
+    default: return value;
+  }
+}
+
 export function getResourceLimits() {
   return {
-    Memory: config.MEMORY_LIMIT || '128m',
+    Memory: parseMemoryToBytes(config.MEMORY_LIMIT),
     NanoCpus: Math.floor((config.CPU_LIMIT || 0.5) * 1e9),
     NetworkMode: 'none',
     CapDrop: ['ALL'],
     Privileged: false,
-    ReadonlyRootfs: true
+    ReadonlyRootfs: false
   };
 }
 

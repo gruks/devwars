@@ -101,9 +101,20 @@ export class DockerRunner {
 
   buildContainerOptions(langConfig, code, input) {
     let cmd;
+    let initCmd = '';
 
     if (langConfig.compile) {
-      cmd = [langConfig.command[0], langConfig.command[1], langConfig.compile];
+      let fileName;
+      const ext = langConfig.fileExtension;
+      if (langConfig.fileExtension === '.java') {
+        fileName = 'Main';
+      } else if (langConfig.fileExtension === '.go') {
+        fileName = 'main';
+      } else {
+        fileName = 'code';
+      }
+      initCmd = `echo '${code.replace(/'/g, "'\\''")}' > /tmp/${fileName}${ext} && `;
+      cmd = [langConfig.command[0], langConfig.command[1], initCmd + langConfig.compile];
     } else {
       cmd = [...langConfig.command, code];
     }
@@ -118,18 +129,11 @@ export class DockerRunner {
       OpenStdin: !!input,
       StdinOnce: true,
       NetworkDisabled: true,
-      User: 'sandbox',
-      WorkingDir: '/sandbox',
+      User: 'root',
+      WorkingDir: '/tmp',
       HostConfig: {
         AutoRemove: false,
-        ReadonlyRootfs: true,
-        CapDrop: ['ALL'],
-        SecurityOpt: containerSecurityOpts,
-        ...getResourceLimits(config),
-        Tmpfs: {
-          '/tmp': 'rw,noexec,nosuid,size=10m',
-          '/sandbox': 'rw,noexec,nosuid,size=5m'
-        }
+        NetworkMode: 'none'
       }
     };
   }

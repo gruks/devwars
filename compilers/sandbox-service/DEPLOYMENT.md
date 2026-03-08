@@ -36,7 +36,6 @@ cd /app/sandbox-service
 ✅ sandbox-node-runner:latest built successfully
 ✅ sandbox-cpp-runner:latest built successfully
 ✅ sandbox-java-runner:latest built successfully
-✅ sandbox-go-runner:latest built successfully
 ```
 
 ### 2. Configure Environment
@@ -158,7 +157,6 @@ docker tag sandbox-python-runner:latest your-registry/sandbox-python-runner:v1.0
 docker tag sandbox-node-runner:latest your-registry/sandbox-node-runner:v1.0.0
 docker tag sandbox-cpp-runner:latest your-registry/sandbox-cpp-runner:v1.0.0
 docker tag sandbox-java-runner:latest your-registry/sandbox-java-runner:v1.0.0
-docker tag sandbox-go-runner:latest your-registry/sandbox-go-runner:v1.0.0
 
 # Push all
 docker push your-registry/sandbox-service:v1.0.0
@@ -166,7 +164,6 @@ docker push your-registry/sandbox-python-runner:v1.0.0
 docker push your-registry/sandbox-node-runner:v1.0.0
 docker push your-registry/sandbox-cpp-runner:v1.0.0
 docker push your-registry/sandbox-java-runner:v1.0.0
-docker push your-registry/sandbox-go-runner:v1.0.0
 ```
 
 ### 2. Create Namespace

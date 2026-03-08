@@ -47,12 +47,7 @@ const LANGUAGE_CONFIG = {
     compileCmd: 'javac',
     mainClass: 'Main'
   },
-  go: {
-    ext: 'go',
-    runCmd: 'go',
-    compile: false,
-    runArgs: ['run']
-  },
+
   cpp: {
     ext: 'cpp',
     runCmd: '',
@@ -201,22 +196,7 @@ const buildDockerCommand = (tempDir, language, codeFile, timeout) => {
         'bash', '-c',
         `g++ -o /sandbox/${config.executable} /sandbox/${path.basename(codeFile)} && /sandbox/${config.executable}`
       ];
-    } else if (language === 'go') {
-      runCommand = 'docker';
-      runArgs = [
-        'run', '--rm',
-        '--memory', SECURITY_CONFIG.memoryLimit,
-        '--memory-swap', SECURITY_CONFIG.memoryLimit,
-        '--cpus', SECURITY_CONFIG.cpuLimit,
-        '--pids-limit', String(SECURITY_CONFIG.pidsLimit),
-        '--read-only',
-        '--security-opt', 'no-new-privileges:true',
-        '-v', `${tempDir}:/sandbox:ro`,
-        'devwars-sandbox',
-        'timeout', String(Math.ceil(timeout / 1000)), 's',
-        'go', 'run', `/sandbox/${path.basename(codeFile)}`
-      ];
-    }
+
   } else {
     // For interpreted languages
     runCommand = 'docker';
