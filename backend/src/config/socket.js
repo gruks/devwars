@@ -259,8 +259,8 @@ const initializeSocket = (io, sessionMiddleware) => {
         
         // Broadcast match:started with matchId and question (use lowercase:match format)
         io.to(`room:${room._id}`).emit('match:started', { 
-          roomId: room._id,
-          matchId: match._id,
+          roomId: room._id.toString(),
+          matchId: match._id.toString(),
           question: {
             id: question.id,
             title: question.title,

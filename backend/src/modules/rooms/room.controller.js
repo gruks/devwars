@@ -571,7 +571,8 @@ const startMatch = async (req, res) => {
     
     // Prepare response data matching frontend expectations
     const responseData = {
-      matchId: match._id,
+      matchId: match._id.toString(),
+      roomId: id.toString(),
       question: {
         id: question.id,
         title: question.title,
